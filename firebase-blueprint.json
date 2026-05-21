@@ -1,0 +1,24 @@
+{
+  "entities": {
+    "trade": {
+      "title": "Trade",
+      "description": "A financial trade webhook payload",
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string", "description": "The crypto symbol" },
+        "type": { "type": "string", "description": "The transaction type (BUY/SELL)" },
+        "price": { "type": "number", "description": "The price at execution" },
+        "amount": { "type": "number", "description": "The quantity traded" },
+        "pnl": { "type": "number", "description": "Realized Profit & Loss" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["symbol", "type", "price", "amount"]
+    }
+  },
+  "firestore": {
+    "/trades/{tradeId}": {
+      "schema": "trade",
+      "description": "Collection of all executed and synchronized trades"
+    }
+  }
+}

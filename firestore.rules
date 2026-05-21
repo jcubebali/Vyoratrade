@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTrade(data) {
+      return data.symbol is string && data.symbol.size() <= 16
+        && data.type is string && (data.type == 'BUY' || data.type == 'SELL')
+        && data.price is number && data.price > 0
+        && data.amount is number && data.amount > 0
+        && data.keys().hasAll(['symbol', 'type', 'price', 'amount'])
+        && data.keys().size() <= 7;
+    }
+
+    match /trades/{tradeId} {
+      allow read: if isSignedIn();
+      allow create: if isValidId(tradeId) && isValidTrade(request.resource.data);
+    }
+  }
+}

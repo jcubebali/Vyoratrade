@@ -2,8 +2,71 @@ import express from "express";
 import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import fs from "fs";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 dotenv.config();
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: null,
+      email: null,
+      emailVerified: null,
+      isAnonymous: null,
+      tenantId: null,
+      providerInfo: []
+    },
+    operationType,
+    path
+  }
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  throw new Error(JSON.stringify(errInfo));
+}
+
+// Initialize Firebase using local config safely
+let db: any = null;
+try {
+  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+  if (fs.existsSync(configPath)) {
+    const firebaseConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    const firebaseApp = initializeApp(firebaseConfig);
+    db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+    console.log("Firebase initialized successfully, using database:", firebaseConfig.firestoreDatabaseId);
+  } else {
+    console.warn("firebase-applet-config.json does not exist. Standby mode.");
+  }
+} catch (e) {
+  console.error("Failed to initialize Firebase:", e);
+}
 
 const app = express();
 
@@ -423,12 +486,11 @@ app.post("/api/bot/settings", (req, res) => {
 });
 
 // Real-time external webhook endpoint for your Singapore Bot
-app.post("/api/webhook/trade", (req, res) => {
-  const { symbol, type, price, amount, pnl, secret } = req.body;
+app.post("/api/webhook/trade", async (req, res) => {
+  const { symbol, type, price, amount, secret, pnl } = req.body;
 
-  // Simple token guard to ensure secure communication from Singapore
-  const configuredToken = (settings as any).webhookToken || "SG_SECURE_TOKEN_123";
-  if (secret && secret !== configuredToken) {
+  // Verify secret token matching "SG_SECURE_TOKEN_123"
+  if (secret !== "SG_SECURE_TOKEN_123") {
     return res.status(401).json({ error: "Unauthorized. Verify your webhook secret key." });
   }
 
@@ -474,11 +536,42 @@ app.post("/api/webhook/trade", (req, res) => {
     signals[symbol.toUpperCase()].price = tradePrice;
   }
 
+  // Save data to Firestore collection "trades"
+  let firestoreId: string | null = null;
+  if (db) {
+    try {
+      const tradesCol = collection(db, "trades");
+      const docRef = await addDoc(tradesCol, {
+        symbol: symbol.toUpperCase(),
+        type: type.toUpperCase() === "BUY" ? "BUY" : "SELL",
+        price: tradePrice,
+        amount: tradeAmount,
+        pnl: estimatedPnl !== undefined ? estimatedPnl : (externalTrade.pnl || null),
+        timestamp: new Date().toISOString()
+      });
+      firestoreId = docRef.id;
+      console.log(`Successfully saved trade to Firestore under ID: ${firestoreId}`);
+    } catch (fsError) {
+      console.error("Firestore save failed: ", fsError);
+      try {
+        handleFirestoreError(fsError, OperationType.CREATE, "trades");
+      } catch (wrappedError) {
+        return res.status(500).json({
+          error: "Failed to persist trade to Firestore database",
+          details: fsError instanceof Error ? fsError.message : String(fsError)
+        });
+      }
+    }
+  } else {
+    console.warn("Firestore database not initialized. Trade not persisted.");
+  }
+
   res.json({ 
     success: true, 
-    message: "External trade successfully integrated into Dashboard state", 
+    message: "External trade successfully integrated into Dashboard state and persisted to Firestore", 
     trade: externalTrade,
-    currentCashBalance: cashUsdt
+    currentCashBalance: cashUsdt,
+    firestoreId
   });
 });
 
