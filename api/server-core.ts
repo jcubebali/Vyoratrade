@@ -487,12 +487,15 @@ app.post("/api/bot/settings", (req, res) => {
 
 // Real-time external webhook endpoint for your Singapore Bot
 app.post("/api/webhook/trade", async (req, res) => {
-  const { symbol, type, price, amount, secret, pnl } = req.body;
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  const { secret, symbol, type, price, amount, pnl } = req.body || {};
 
   // Verify secret token matching "SG_SECURE_TOKEN_123"
   if (secret !== "SG_SECURE_TOKEN_123") {
-    return res.status(401).json({ error: "Unauthorized. Verify your webhook secret key." });
+    return res.status(401).json({ error: "Unauthorized" });
   }
+
+  console.log("[Webhook] Trade received:", { symbol, type, price, amount, pnl });
 
   if (!symbol || !type || !price || !amount) {
     return res.status(400).json({ error: "Missing required fields: symbol, type, price, and amount are required." });
@@ -553,26 +556,12 @@ app.post("/api/webhook/trade", async (req, res) => {
       console.log(`Successfully saved trade to Firestore under ID: ${firestoreId}`);
     } catch (fsError) {
       console.error("Firestore save failed: ", fsError);
-      try {
-        handleFirestoreError(fsError, OperationType.CREATE, "trades");
-      } catch (wrappedError) {
-        return res.status(500).json({
-          error: "Failed to persist trade to Firestore database",
-          details: fsError instanceof Error ? fsError.message : String(fsError)
-        });
-      }
     }
   } else {
     console.warn("Firestore database not initialized. Trade not persisted.");
   }
 
-  res.json({ 
-    success: true, 
-    message: "External trade successfully integrated into Dashboard state and persisted to Firestore", 
-    trade: externalTrade,
-    currentCashBalance: cashUsdt,
-    firestoreId
-  });
+  return res.status(200).json({ success: true, ...(firestoreId ? { firestoreId } : {}) });
 });
 
 app.post("/api/webhook/balance", (req, res) => {
