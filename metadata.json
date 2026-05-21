@@ -1,0 +1,6 @@
+{
+  "name": "Vyora AI Trading Console",
+  "description": "Algorithmic quantitative trading bot and real-time market data screener with deep technical audits powered by Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
