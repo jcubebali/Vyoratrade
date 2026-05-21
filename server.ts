@@ -1,6 +1,5 @@
 import express from "express";
 import path from "path";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
@@ -354,7 +353,23 @@ function getGeminiClient(): GoogleGenAI {
 }
 
 // Core API endpoints
-app.get("/api/state", (req, res) => {
+app.get("/api/state", async (req, res) => {
+  // On serverless Vercel, background intervals don't tick. Update market indicators dynamically.
+  if (process.env.VERCEL) {
+    await fetchBinancePrices();
+    if (!lastFetchSuccess) {
+      for (const sym of Object.keys(signals)) {
+        const coin = signals[sym];
+        const fluctuationPercent = (Math.random() - 0.49) * 0.003;
+        coin.price = parseFloat((coin.price * (1 + fluctuationPercent)).toFixed(2));
+        const dailyFluctuation = (Math.random() - 0.47) * 0.15;
+        coin.change24h = parseFloat((coin.change24h + dailyFluctuation).toFixed(3));
+        coin.rsi = Math.min(95, Math.max(10, parseFloat((coin.rsi + (Math.random() - 0.5) * 1.5).toFixed(1))));
+        coin.macd = parseFloat((coin.macd + (Math.random() - 0.5) * 0.5).toFixed(2));
+      }
+    }
+  }
+
   // Format assets to match signals pricing
   const assets = [
     { symbol: "USDT", amount: parseFloat((cashUsdt).toFixed(2)), price: 1.0, change24h: 0.00 },
@@ -638,7 +653,8 @@ app.post("/api/gemini/chat", async (req, res) => {
 // Vite middleware integration for full-stack build orchestration
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
-    const vite = await createViteServer({
+    const { createServer } = await import("vite");
+    const vite = await createServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
@@ -656,4 +672,8 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
+
+export default app;
