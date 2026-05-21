@@ -237,100 +237,102 @@ async function fetchBinancePrices() {
 }
 
 // Global pricing feed simulator loop (runs every 3 seconds to update prices from real Binance feed or walk fallback)
-setInterval(async () => {
-  // Pull real exchange rates
-  await fetchBinancePrices();
+if (!process.env.VERCEL) {
+  setInterval(async () => {
+    // Pull real exchange rates
+    await fetchBinancePrices();
 
-  // If live fetch failed, fall back to robust random walk simulator to make numbers tick dynamically
-  if (!lastFetchSuccess) {
-    for (const sym of Object.keys(signals)) {
-      const coin = signals[sym];
-      const fluctuationPercent = (Math.random() - 0.49) * 0.003; // Slightly positive bias
-      const oldPrice = coin.price;
-      coin.price = parseFloat((oldPrice * (1 + fluctuationPercent)).toFixed(2));
-      
-      // Smooth change calculations
-      const dailyFluctuation = (Math.random() - 0.47) * 0.15;
-      coin.change24h = parseFloat((coin.change24h + dailyFluctuation).toFixed(3));
-      if (coin.change24h > 15) coin.change24h = 15;
-      if (coin.change24h < -15) coin.change24h = -15;
+    // If live fetch failed, fall back to robust random walk simulator to make numbers tick dynamically
+    if (!lastFetchSuccess) {
+      for (const sym of Object.keys(signals)) {
+        const coin = signals[sym];
+        const fluctuationPercent = (Math.random() - 0.49) * 0.003; // Slightly positive bias
+        const oldPrice = coin.price;
+        coin.price = parseFloat((oldPrice * (1 + fluctuationPercent)).toFixed(2));
+        
+        // Smooth change calculations
+        const dailyFluctuation = (Math.random() - 0.47) * 0.15;
+        coin.change24h = parseFloat((coin.change24h + dailyFluctuation).toFixed(3));
+        if (coin.change24h > 15) coin.change24h = 15;
+        if (coin.change24h < -15) coin.change24h = -15;
 
-      // RSI fluctuations
-      const rsiFluct = (Math.random() - 0.5) * 1.5;
-      coin.rsi = Math.min(95, Math.max(10, parseFloat((coin.rsi + rsiFluct).toFixed(1))));
+        // RSI fluctuations
+        const rsiFluct = (Math.random() - 0.5) * 1.5;
+        coin.rsi = Math.min(95, Math.max(10, parseFloat((coin.rsi + rsiFluct).toFixed(1))));
 
-      // MACD Hist fluctuations
-      const macdFluct = (Math.random() - 0.5) * 0.5;
-      coin.macd = parseFloat((coin.macd + macdFluct).toFixed(2));
+        // MACD Hist fluctuations
+        const macdFluct = (Math.random() - 0.5) * 0.5;
+        coin.macd = parseFloat((coin.macd + macdFluct).toFixed(2));
 
-      // Update trend and verdicts
-      if (coin.rsi > 65) {
-        coin.trend = "BULLISH";
-        coin.verdict = "BUY";
-        coin.confidence = "HIGH";
-      } else if (coin.rsi < 35) {
-        coin.trend = "BEARISH";
-        coin.verdict = "SELL";
-        coin.confidence = "MEDIUM";
-      } else {
-        coin.trend = "NEUTRAL";
-        coin.verdict = "HOLD";
-        coin.confidence = "LOW";
+        // Update trend and verdicts
+        if (coin.rsi > 65) {
+          coin.trend = "BULLISH";
+          coin.verdict = "BUY";
+          coin.confidence = "HIGH";
+        } else if (coin.rsi < 35) {
+          coin.trend = "BEARISH";
+          coin.verdict = "SELL";
+          coin.confidence = "MEDIUM";
+        } else {
+          coin.trend = "NEUTRAL";
+          coin.verdict = "HOLD";
+          coin.confidence = "LOW";
+        }
       }
     }
-  }
 
-  // Simulate active automated bot trades occasionally (every 16 seconds if bot isActive)
-  if (botConfig.isActive && Math.random() < 0.15) {
-    const symbol = botConfig.symbol;
-    const currentPrice = signals[symbol]?.price || 100;
-    
-    // Half the time buy, half the time sell a closed trade
-    const hasBoughtToday = trades.filter(t => t.symbol === symbol && t.type === "BUY" && t.status === "COMPLETED").length;
-    const hasSoldToday = trades.filter(t => t.symbol === symbol && t.type === "SELL" && t.status === "COMPLETED").length;
-
-    if (hasBoughtToday > hasSoldToday) {
-      // Execute simulated automatic TP/SL Sell trade
-      const lastBuy = [...trades].reverse().find(t => t.symbol === symbol && t.type === "BUY");
-      const entryPrice = lastBuy ? lastBuy.price : currentPrice * 0.995;
-      const size = lastBuy ? lastBuy.amount : Number((botConfig.capital / currentPrice).toFixed(4));
-      const total = parseFloat((size * currentPrice).toFixed(2));
-      const pnl = parseFloat(((currentPrice - entryPrice) * size).toFixed(2));
+    // Simulate active automated bot trades occasionally (every 16 seconds if bot isActive)
+    if (botConfig.isActive && Math.random() < 0.15) {
+      const symbol = botConfig.symbol;
+      const currentPrice = signals[symbol]?.price || 100;
       
-      const sellTrade = {
-        id: "TR-" + Math.floor(9000 + Math.random() * 1000),
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-        symbol,
-        type: "SELL",
-        price: currentPrice,
-        amount: size,
-        total,
-        status: "COMPLETED",
-        pnl,
-      };
+      // Half the time buy, half the time sell a closed trade
+      const hasBoughtToday = trades.filter(t => t.symbol === symbol && t.type === "BUY" && t.status === "COMPLETED").length;
+      const hasSoldToday = trades.filter(t => t.symbol === symbol && t.type === "SELL" && t.status === "COMPLETED").length;
 
-      trades.push(sellTrade);
-      cashUsdt = parseFloat((cashUsdt + pnl).toFixed(2));
-    } else {
-      // Execute automatic buy order
-      const size = Number((botConfig.capital / currentPrice).toFixed(4));
-      const total = parseFloat((size * currentPrice).toFixed(2));
-      
-      const buyTrade = {
-        id: "TR-" + Math.floor(9000 + Math.random() * 1000),
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-        symbol,
-        type: "BUY",
-        price: currentPrice,
-        amount: size,
-        total,
-        status: "COMPLETED",
-      };
+      if (hasBoughtToday > hasSoldToday) {
+        // Execute simulated automatic TP/SL Sell trade
+        const lastBuy = [...trades].reverse().find(t => t.symbol === symbol && t.type === "BUY");
+        const entryPrice = lastBuy ? lastBuy.price : currentPrice * 0.995;
+        const size = lastBuy ? lastBuy.amount : Number((botConfig.capital / currentPrice).toFixed(4));
+        const total = parseFloat((size * currentPrice).toFixed(2));
+        const pnl = parseFloat(((currentPrice - entryPrice) * size).toFixed(2));
+        
+        const sellTrade = {
+          id: "TR-" + Math.floor(9000 + Math.random() * 1000),
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+          symbol,
+          type: "SELL",
+          price: currentPrice,
+          amount: size,
+          total,
+          status: "COMPLETED",
+          pnl,
+        };
 
-      trades.push(buyTrade);
+        trades.push(sellTrade);
+        cashUsdt = parseFloat((cashUsdt + pnl).toFixed(2));
+      } else {
+        // Execute automatic buy order
+        const size = Number((botConfig.capital / currentPrice).toFixed(4));
+        const total = parseFloat((size * currentPrice).toFixed(2));
+        
+        const buyTrade = {
+          id: "TR-" + Math.floor(9000 + Math.random() * 1000),
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+          symbol,
+          type: "BUY",
+          price: currentPrice,
+          amount: size,
+          total,
+          status: "COMPLETED",
+        };
+
+        trades.push(buyTrade);
+      }
     }
-  }
-}, 3000);
+  }, 3000);
+}
 
 // Lazy Gemini API instantiation pattern (prevents crashing if GEMINI_API_KEY is not defined)
 let aiClientInstance: GoogleGenAI | null = null;
