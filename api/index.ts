@@ -430,7 +430,7 @@ function getGeminiClient(): GoogleGenAI {
 async function getBinanceAccount() {
   if (!settings.binanceApiKey || !settings.binanceSecret) return null;
   const timestamp = Date.now();
-  const queryString = `timestamp=${timestamp}`;
+  const queryString = `recvWindow=60000&timestamp=${timestamp}`;
   const signature = crypto.createHmac('sha256', settings.binanceSecret).update(queryString).digest('hex');
   
   try {
@@ -443,8 +443,16 @@ async function getBinanceAccount() {
       return await res.json();
     } else {
       const errText = await res.text();
-      console.error("Binance error status:", res.status, errText);
-      return { error: `Binance Error ${res.status}: ${errText}` };
+      let errorMessage = `Binance Error ${res.status}: ${errText}`;
+      
+      // If IP restricted error is returned, provide an explicit message
+      if (errText.includes("-2015")) {
+        errorMessage = "API terbatas IP: Koneksi dashboard ditolak oleh Binance karena API Key telah di-whitelist ke IP server bot. Status: AMAN.";
+      } else {
+        console.error("Binance error status:", res.status, errText);
+      }
+      
+      return { error: errorMessage };
     }
   } catch(err: any) {
     console.error("Binance account fetch error", err);
@@ -457,7 +465,7 @@ app.get("/api/test-binance", async (req, res) => {
     return res.json({ error: "Missing API keys" });
   }
   const timestamp = Date.now();
-  const queryString = `timestamp=${timestamp}`;
+  const queryString = `recvWindow=60000&timestamp=${timestamp}`;
   const signature = crypto.createHmac('sha256', settings.binanceSecret).update(queryString).digest('hex');
   
   try {
@@ -471,7 +479,11 @@ app.get("/api/test-binance", async (req, res) => {
       return res.json({ success: true, data });
     } else {
       const errText = await fetchRes.text();
-      return res.json({ error: "Binance API failed", status: fetchRes.status, errText, keysLength: settings.binanceApiKey.length });
+      let errorMessage = "Binance API failed";
+      if (errText.includes("-2015")) {
+        errorMessage = "API terbatas IP: Koneksi dashboard ditolak oleh Binance karena API Key telah di-whitelist ke IP server bot. Status: AMAN.";
+      }
+      return res.json({ error: errorMessage, status: fetchRes.status, errText, keysLength: settings.binanceApiKey.length });
     }
   } catch(err: any) {
     return res.json({ error: "Fetch exception", details: err.message });

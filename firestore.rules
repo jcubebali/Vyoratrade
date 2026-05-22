@@ -23,6 +23,20 @@ service cloud.firestore {
         && data.keys().size() <= 7;
     }
 
+    function isValidUserConfig(data) {
+      return (!('binanceApiKey' in data) || data.binanceApiKey is string)
+          && (!('binanceApiSecret' in data) || data.binanceApiSecret is string)
+          && (!('telegramBotId' in data) || data.telegramBotId is string)
+          && (!('telegramChatId' in data) || data.telegramChatId is string)
+          && (!('webhookToken' in data) || data.webhookToken is string);
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUserConfig(request.resource.data);
+      allow update: if isSignedIn() && request.auth.uid == userId && isValidUserConfig(request.resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['binanceApiKey', 'binanceApiSecret', 'telegramBotId', 'telegramChatId', 'webhookToken']);
+    }
+
     match /trades/{tradeId} {
       allow read: if isSignedIn();
       allow create: if isValidId(tradeId) && isValidTrade(request.resource.data);

@@ -64,25 +64,27 @@ export default function SettingsView({ state, onSaveSettings }: SettingsViewProp
       // Encrypt the secrets
       // We use a derivation of the user uid as the encryption key (just for demonstration of client-side basic encryption)
       const encryptionKey = user.uid + "-secret-key";
-      const encryptedApiKey = CryptoJS.AES.encrypt(exchangeKey, encryptionKey).toString();
-      const encryptedApiSecret = CryptoJS.AES.encrypt(exchangeSecret, encryptionKey).toString();
+      const sanitizedKey = exchangeKey.trim();
+      const sanitizedSecret = exchangeSecret.trim();
+      const encryptedApiKey = CryptoJS.AES.encrypt(sanitizedKey, encryptionKey).toString();
+      const encryptedApiSecret = CryptoJS.AES.encrypt(sanitizedSecret, encryptionKey).toString();
 
       // Save to Firestore
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
         binanceApiKey: encryptedApiKey,
         binanceApiSecret: encryptedApiSecret,
-        telegramBotId,
-        telegramChatId,
+        telegramBotId: telegramBotId.trim(),
+        telegramChatId: telegramChatId.trim(),
         webhookToken
       }, { merge: true });
 
       // Also call the original onSaveSettings to keep local state updated if necessary
       await onSaveSettings({
-        binanceApiKey: exchangeKey,
-        binanceSecret: exchangeSecret,
-        telegramBotId,
-        telegramChatId,
+        binanceApiKey: sanitizedKey,
+        binanceSecret: sanitizedSecret,
+        telegramBotId: telegramBotId.trim(),
+        telegramChatId: telegramChatId.trim(),
         webhookToken
       });
 
@@ -193,25 +195,37 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
       </header>
       
       {state.binanceError && (
-         <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start flex-col gap-2">
-            <div className="flex items-center gap-2 text-rose-400 font-bold mb-1">
+         <div className={`p-4 border rounded-2xl flex items-start flex-col gap-2 ${state.binanceError.includes('AMAN') ? 'bg-amber-500/10 border-amber-500/20' : 'bg-rose-500/10 border-rose-500/20'}`}>
+            <div className={`flex items-center gap-2 font-bold mb-1 ${state.binanceError.includes('AMAN') ? 'text-amber-400' : 'text-rose-400'}`}>
               <AlertTriangle className="w-5 h-5 shrink-0" />
-              <span>Binance Connection Failed</span>
+              <span>{state.binanceError.includes('AMAN') ? 'Koneksi Terlindungi Firewall' : 'Binance Connection Failed'}</span>
             </div>
-            <div className="text-xs text-rose-300 font-mono break-all whitespace-pre-wrap">
+            <div className={`text-xs font-mono break-all whitespace-pre-wrap ${state.binanceError.includes('AMAN') ? 'text-amber-300' : 'text-rose-300'}`}>
               {state.binanceError}
             </div>
-            <div className="text-xs text-slate-400 mt-2 font-sans space-y-2">
-              <p><strong>Solusi:</strong> Kesalahan ini terjadi jika IP server belum masuk whitelist di Binance. Silakan whitelist alamat IP statis berikut pada pengaturan API Binance Anda:</p>
-              <div className="bg-slate-900 border border-slate-700/50 rounded-lg p-3 mt-2">
-                 <div className="text-[10px] uppercase text-slate-500 mb-1 font-bold">Informasi Server Static IP</div>
-                 <div className="flex justify-between items-center text-xs mt-1">
-                    <span className="text-slate-400">IP Whitelist:</span>
-                    <span className="text-emerald-400 font-mono font-bold">152.42.248.130</span>
-                 </div>
+            {!state.binanceError.includes('AMAN') && (
+              <div className="text-xs text-slate-400 mt-3 font-sans space-y-3">
+                <p><strong>Penting:</strong> Pesan kesalahan ini (code -2015) <strong>wajar terjadi</strong> jika Anda telah berhasil me-whitelist IP spesifik.</p>
+                
+                <div className="bg-slate-900 border border-slate-700/50 rounded-lg p-3">
+                   <div className="text-[10px] uppercase text-slate-500 mb-2 font-bold flex items-center justify-between">
+                      <span>Instruksi IP Whitelist Binance</span>
+                      <span className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-[9px]">DIREKOMENDASIKAN</span>
+                   </div>
+                   <p className="text-xs text-slate-300 mb-2 leading-relaxed">
+                     Untuk keamanan maksimal saat menggunakan script eksternal (Singapore Bot), Anda harus membatasi akses API Key Anda ke alamat IP server bot tersebut:
+                   </p>
+                   <div className="flex justify-between items-center bg-slate-950 p-2 rounded border border-slate-800">
+                      <span className="text-slate-400 text-xs">IP Whitelist:</span>
+                      <span className="text-emerald-400 font-mono font-bold">152.42.248.130</span>
+                   </div>
+                </div>
+                
+                <p>Karena dashboard ini bersifat cloud (Hosted on Google Cloud dengan IP dinamis), dashboard ini <strong>tidak dapat melewati firewall Binance Anda</strong> yang telah dibatasi ke IP 152.42.248.130 di atas.</p>
+                
+                <p className="text-slate-500">Selama Anda telah memasukkan API Key yang benar (tanpa spasi tersembunyi), dan mencentang <strong>"Enable Reading"</strong>, integrasi Webhook ke VPS/Server Anda akan tetap berjalan normal sesuai skrip.</p>
               </div>
-              <p className="mt-2 text-slate-300">Pastikan juga "Enable Reading" sudah dicentang.</p>
-            </div>
+            )}
          </div>
       )}
 
