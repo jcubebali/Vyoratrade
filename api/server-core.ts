@@ -3,8 +3,8 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs";
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { initializeApp, getApps } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 
 dotenv.config();
 
@@ -58,9 +58,13 @@ try {
   const configPath = path.join(process.cwd(), "firebase-applet-config.json");
   if (fs.existsSync(configPath)) {
     const firebaseConfig = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-    const firebaseApp = initializeApp(firebaseConfig);
-    db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
-    console.log("Firebase initialized successfully, using database:", firebaseConfig.firestoreDatabaseId);
+    if (getApps().length === 0) {
+      initializeApp({
+        projectId: firebaseConfig.projectId,
+      });
+    }
+    db = getFirestore(firebaseConfig.firestoreDatabaseId);
+    console.log("Firebase Admin initialized successfully, using database:", firebaseConfig.firestoreDatabaseId);
   } else {
     console.warn("firebase-applet-config.json does not exist. Standby mode.");
   }
@@ -543,8 +547,7 @@ app.post("/api/webhook/trade", async (req, res) => {
   let firestoreId: string | null = null;
   if (db) {
     try {
-      const tradesCol = collection(db, "trades");
-      const docRef = await addDoc(tradesCol, {
+      const docRef = await db.collection("trades").add({
         symbol: symbol.toUpperCase(),
         type: type.toUpperCase() === "BUY" ? "BUY" : "SELL",
         price: tradePrice,
