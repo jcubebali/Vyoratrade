@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import app from "./api/server-core.ts";
+import app from "./api/index.ts";
 
 dotenv.config();
 
