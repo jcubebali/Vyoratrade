@@ -1,4 +1,7 @@
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
+import CryptoJS from "crypto-js";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { db, auth } from "../firebase";
 import { 
   Lock, 
   Check, 
@@ -31,17 +34,50 @@ export default function SettingsView({ state, onSaveSettings }: SettingsViewProp
   const [showSensitive, setShowSensitive] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [serverIp, setServerIp] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/server-ip")
+      .then(res => res.json())
+      .then(data => setServerIp(data.ip))
+      .catch(() => setServerIp("Unknown"));
+  }, []);
   
   // Script tab state
   const [activeSnippetTab, setActiveSnippetTab] = useState<"curl" | "python" | "nodejs">("python");
   const [copiedText, setCopiedText] = useState(false);
 
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setSaveSuccess(false);
+    setSaveError(null);
 
     try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("User must be logged in to save settings.");
+      }
+
+      // Encrypt the secrets
+      // We use a derivation of the user uid as the encryption key (just for demonstration of client-side basic encryption)
+      const encryptionKey = user.uid + "-secret-key";
+      const encryptedApiKey = CryptoJS.AES.encrypt(exchangeKey, encryptionKey).toString();
+      const encryptedApiSecret = CryptoJS.AES.encrypt(exchangeSecret, encryptionKey).toString();
+
+      // Save to Firestore
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        binanceApiKey: encryptedApiKey,
+        binanceApiSecret: encryptedApiSecret,
+        telegramBotId,
+        telegramChatId,
+        webhookToken
+      }, { merge: true });
+
+      // Also call the original onSaveSettings to keep local state updated if necessary
       await onSaveSettings({
         binanceApiKey: exchangeKey,
         binanceSecret: exchangeSecret,
@@ -49,11 +85,12 @@ export default function SettingsView({ state, onSaveSettings }: SettingsViewProp
         telegramChatId,
         webhookToken
       });
+
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to register credential changes.");
+      setSaveError(err.message || "Failed to register credential changes.");
     } finally {
       setIsSaving(false);
     }
@@ -154,6 +191,29 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
           Securely plug private trading credentials, Singapore alert channels, or webhook tokens directly into state memory indexes.
         </p>
       </header>
+      
+      {state.binanceError && (
+         <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl flex items-start flex-col gap-2">
+            <div className="flex items-center gap-2 text-rose-400 font-bold mb-1">
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <span>Binance Connection Failed</span>
+            </div>
+            <div className="text-xs text-rose-300 font-mono break-all whitespace-pre-wrap">
+              {state.binanceError}
+            </div>
+            <div className="text-xs text-slate-400 mt-2 font-sans space-y-2">
+              <p><strong>Solusi:</strong> Kesalahan ini terjadi jika IP server belum masuk whitelist di Binance. Silakan whitelist alamat IP statis berikut pada pengaturan API Binance Anda:</p>
+              <div className="bg-slate-900 border border-slate-700/50 rounded-lg p-3 mt-2">
+                 <div className="text-[10px] uppercase text-slate-500 mb-1 font-bold">Informasi Server Static IP</div>
+                 <div className="flex justify-between items-center text-xs mt-1">
+                    <span className="text-slate-400">IP Whitelist:</span>
+                    <span className="text-emerald-400 font-mono font-bold">152.42.248.130</span>
+                 </div>
+              </div>
+              <p className="mt-2 text-slate-300">Pastikan juga "Enable Reading" sudah dicentang.</p>
+            </div>
+         </div>
+      )}
 
       {/* Settings Grid forms */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -266,12 +326,19 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
 
           </div>
 
-          <div className="flex justify-end gap-3 pt-5 border-t border-slate-800/60 mt-4">
-            {saveSuccess && (
-              <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1 font-sans">
-                <Check className="h-4 w-4" /> Integrations Locked Successfully!
-              </span>
-            )}
+          <div className="flex justify-between items-center pt-5 border-t border-slate-800/60 mt-4 gap-3">
+            <div className="flex-1">
+              {saveSuccess && (
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1 font-sans">
+                  <Check className="h-4 w-4" /> Integrations Locked Successfully!
+                </span>
+              )}
+              {saveError && (
+                <span className="text-xs text-rose-400 font-semibold flex items-center gap-1 font-sans">
+                  <AlertTriangle className="h-4 w-4" /> {saveError}
+                </span>
+              )}
+            </div>
             <button
               type="submit"
               id="save-secrets-btn"

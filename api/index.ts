@@ -3,6 +3,7 @@ import path from "path";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs";
+import crypto from "crypto";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
@@ -426,6 +427,67 @@ function getGeminiClient(): GoogleGenAI {
   return aiClientInstance;
 }
 
+async function getBinanceAccount() {
+  if (!settings.binanceApiKey || !settings.binanceSecret) return null;
+  const timestamp = Date.now();
+  const queryString = `timestamp=${timestamp}`;
+  const signature = crypto.createHmac('sha256', settings.binanceSecret).update(queryString).digest('hex');
+  
+  try {
+    const res = await fetch(`https://api.binance.com/api/v3/account?${queryString}&signature=${signature}`, {
+      headers: {
+        'X-MBX-APIKEY': settings.binanceApiKey
+      }
+    });
+    if (res.ok) {
+      return await res.json();
+    } else {
+      const errText = await res.text();
+      console.error("Binance error status:", res.status, errText);
+      return { error: `Binance Error ${res.status}: ${errText}` };
+    }
+  } catch(err: any) {
+    console.error("Binance account fetch error", err);
+    return { error: `Fetch error: ${err.message}` };
+  }
+}
+
+app.get("/api/test-binance", async (req, res) => {
+  if (!settings.binanceApiKey || !settings.binanceSecret) {
+    return res.json({ error: "Missing API keys" });
+  }
+  const timestamp = Date.now();
+  const queryString = `timestamp=${timestamp}`;
+  const signature = crypto.createHmac('sha256', settings.binanceSecret).update(queryString).digest('hex');
+  
+  try {
+    const fetchRes = await fetch(`https://api.binance.com/api/v3/account?${queryString}&signature=${signature}`, {
+      headers: {
+        'X-MBX-APIKEY': settings.binanceApiKey
+      }
+    });
+    if (fetchRes.ok) {
+      const data = await fetchRes.json();
+      return res.json({ success: true, data });
+    } else {
+      const errText = await fetchRes.text();
+      return res.json({ error: "Binance API failed", status: fetchRes.status, errText, keysLength: settings.binanceApiKey.length });
+    }
+  } catch(err: any) {
+    return res.json({ error: "Fetch exception", details: err.message });
+  }
+});
+
+app.get("/api/server-ip", async (req, res) => {
+  try {
+    const ipRes = await fetch("https://api.ipify.org?format=json");
+    const data = await ipRes.json();
+    res.json({ ip: data.ip });
+  } catch (err: any) {
+    res.json({ ip: "Unknown" });
+  }
+});
+
 // Core API endpoints
 app.get("/api/state", async (req, res) => {
   // On serverless Vercel, background intervals don't tick. Update market indicators dynamically.
@@ -445,12 +507,61 @@ app.get("/api/state", async (req, res) => {
   }
 
   // Format assets to match signals pricing
-  const assets = [
-    { symbol: "USDT", amount: parseFloat((cashUsdt).toFixed(2)), price: 1.0, change24h: 0.00 },
-    { symbol: "BTC", amount: 0.15, price: signals["BTCUSDT"].price, change24h: signals["BTCUSDT"].change24h },
-    { symbol: "ETH", amount: 2.22, price: signals["ETHUSDT"].price, change24h: signals["ETHUSDT"].change24h },
-    { symbol: "SOL", amount: 15.54, price: signals["SOLUSDT"].price, change24h: signals["SOLUSDT"].change24h },
-  ];
+  let assets = [];
+  let userCashUsdt = cashUsdt;
+
+  let binanceError = null;
+  const binanceAccount = await getBinanceAccount();
+  if (binanceAccount && !binanceAccount.error) {
+    if (binanceAccount.balances) {
+      assets = binanceAccount.balances
+        .filter((b: any) => parseFloat(b.free) > 0 || parseFloat(b.locked) > 0)
+        .map((b: any) => {
+          const amount = parseFloat(b.free) + parseFloat(b.locked);
+          let price = 1.0;
+          let change24h = 0;
+          
+          if (b.asset === 'USDT') {
+            userCashUsdt = amount;
+            return { symbol: 'USDT', amount, price: 1.0, change24h: 0 };
+          }
+          
+          const signal = signals[`${b.asset}USDT`];
+          if (signal) {
+            price = signal.price;
+            change24h = signal.change24h;
+          } else {
+            // Fallback if price isn't tracked in signals
+            price = 0; 
+          }
+
+          return { symbol: b.asset, amount, price, change24h };
+        })
+        .filter((b: any) => b.symbol === 'USDT' || b.price > 0)
+        .sort((a: any, b: any) => (b.amount * b.price) - (a.amount * a.price));
+
+        if (!assets.find((a: any) => a.symbol === 'USDT')) {
+           userCashUsdt = 0;
+           assets.unshift({ symbol: 'USDT', amount: 0, price: 1.0, change24h: 0 });
+        }
+    }
+  } else if (binanceAccount && binanceAccount.error) {
+    binanceError = binanceAccount.error;
+    // Fallback to demo data
+    assets = [
+      { symbol: "USDT", amount: parseFloat((cashUsdt).toFixed(2)), price: 1.0, change24h: 0.00 },
+      { symbol: "BTC", amount: 0.15, price: signals["BTCUSDT"].price, change24h: signals["BTCUSDT"].change24h },
+      { symbol: "ETH", amount: 2.22, price: signals["ETHUSDT"].price, change24h: signals["ETHUSDT"].change24h },
+      { symbol: "SOL", amount: 15.54, price: signals["SOLUSDT"].price, change24h: signals["SOLUSDT"].change24h },
+    ];
+  } else {
+    assets = [
+      { symbol: "USDT", amount: parseFloat((cashUsdt).toFixed(2)), price: 1.0, change24h: 0.00 },
+      { symbol: "BTC", amount: 0.15, price: signals["BTCUSDT"].price, change24h: signals["BTCUSDT"].change24h },
+      { symbol: "ETH", amount: 2.22, price: signals["ETHUSDT"].price, change24h: signals["ETHUSDT"].change24h },
+      { symbol: "SOL", amount: 15.54, price: signals["SOLUSDT"].price, change24h: signals["SOLUSDT"].change24h },
+    ];
+  }
 
   res.json({
     signals,
@@ -460,10 +571,11 @@ app.get("/api/state", async (req, res) => {
     subscription,
     settings,
     balance: {
-      cashUsdt,
+      cashUsdt: userCashUsdt,
     },
     activePositions: getActivePositions(),
-    dataSource: lastFetchSuccess ? "LIVE BINANCE API" : "STANDBY MEMORY SIMULATOR"
+    dataSource: (binanceAccount && !binanceAccount.error ? "LIVE PRIVATE BINANCE API" : (lastFetchSuccess ? "LIVE PUBLIC BINANCE API" : "STANDBY MEMORY SIMULATOR")),
+    binanceError
   });
 });
 

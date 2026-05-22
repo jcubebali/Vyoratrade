@@ -19,7 +19,7 @@ interface DashboardViewProps {
 }
 
 export default function DashboardView({ state, onToggleBot, onSetActiveTab }: DashboardViewProps) {
-  const { signals, botConfig, assets, activePositions, balance } = state;
+  const { signals, botConfig, assets, activePositions, balance, trades } = state;
 
   // Calculate Net Asset Value (NAV) dynamically
   const cashVal = balance?.cashUsdt || 0;
@@ -27,6 +27,11 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
     .filter(a => a.symbol !== "USDT")
     .reduce((sum, a) => sum + (a.amount * a.price), 0);
   const totalNAV = cashVal + cryptoVal;
+
+  const closedTrades = trades.filter(t => t.pnl !== undefined);
+  const totalPnL = closedTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
+  const winningTrades = closedTrades.filter(t => (t.pnl || 0) > 0).length;
+  const winRate = closedTrades.length > 0 ? (winningTrades / closedTrades.length) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -73,7 +78,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
       </div>
 
       {/* Main Core Overview Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Metric 1: Net Asset Value */}
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
@@ -82,7 +87,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
             </span>
             <Wallet className="h-4.5 w-4.5 text-emerald-400" />
           </div>
-          <h3 className="text-2xl font-bold text-slate-100 font-mono tracking-tight">
+          <h3 className="text-xl font-bold text-slate-100 font-mono tracking-tight">
             ${totalNAV.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h3>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
@@ -95,14 +100,14 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">
-              Vyora Engine Master Run
+              Vyora Engine
             </span>
             <Activity className="h-4.5 w-4.5 text-indigo-400" />
           </div>
           <div className="flex items-center space-x-2.5">
             <span className={`w-3 h-3 rounded-full ${botConfig.isActive ? "bg-emerald-400 animate-pulse shadow-md shadow-emerald-400" : "bg-slate-700"}`} />
-            <h3 className="text-lg font-bold text-slate-100 uppercase font-mono">
-              {botConfig.isActive ? "ACTIVE & RUNNING" : "STANDBY SYSTEM"}
+            <h3 className="text-xl font-bold text-slate-100 uppercase font-mono">
+              {botConfig.isActive ? "ACTIVE" : "STANDBY"}
             </h3>
           </div>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
@@ -111,19 +116,36 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
           <div className="absolute top-0 right-0 h-16 w-16 bg-indigo-500/5 rounded-full blur-2xl" />
         </div>
 
-        {/* Metric 3: Active Leverage allocation ratio */}
+        {/* Metric 3: Total Realized PnL */}
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">
-              Leverage Risk Multiplier
+              Total Realized PnL
+            </span>
+            <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
+          </div>
+          <h3 className={`text-xl font-bold font-mono tracking-tight ${totalPnL >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+            {totalPnL >= 0 ? "+" : ""}${totalPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </h3>
+          <p className="text-[11px] text-slate-400 mt-2 font-medium">
+            From <b className="text-slate-200">{closedTrades.length}</b> completed trades
+          </p>
+          <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/5 rounded-full blur-2xl" />
+        </div>
+
+        {/* Metric 4: Win Rate */}
+        <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">
+              Strategy Win Rate
             </span>
             <ShieldCheck className="h-4.5 w-4.5 text-indigo-400" />
           </div>
-          <h3 className="text-2xl font-bold text-slate-100 font-mono tracking-tight">
-            {botConfig.leverage}X ALLOC
+          <h3 className="text-xl font-bold text-slate-100 font-mono tracking-tight">
+            {winRate.toFixed(1)}%
           </h3>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
-            Target stop: <b className="text-rose-400">-{botConfig.stopLoss}%</b> | profit cap: <b className="text-emerald-400">+{botConfig.takeProfit}%</b>
+            <b className="text-emerald-400">{winningTrades}</b> Winning / <b className="text-rose-400">{closedTrades.length - winningTrades}</b> Losing
           </p>
           <div className="absolute top-0 right-0 h-16 w-16 bg-violet-500/5 rounded-full blur-2xl" />
         </div>

@@ -15,7 +15,7 @@ import {
   Menu, 
   X, 
   Sparkles,
-  ArrowUpRight
+  LogOut
 } from "lucide-react";
 
 import { CompleteState } from "./types";
@@ -27,6 +27,11 @@ import ChatroomView from "./components/ChatroomView";
 import PortfolioView from "./components/PortfolioView";
 import BillingView from "./components/BillingView";
 import SettingsView from "./components/SettingsView";
+import LoginView from "./components/LoginView";
+
+import { auth, db } from "./firebase";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 
 const DEFAULT_STATE: CompleteState = {
   signals: {
@@ -50,16 +55,27 @@ const DEFAULT_STATE: CompleteState = {
 };
 
 export default function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [authChecking, setAuthChecking] = useState(true);
   const [state, setState] = useState<CompleteState>(DEFAULT_STATE);
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+      setAuthChecking(false);
+    });
+    return () => unsub();
+  }, []);
 
   const fetchState = async () => {
     try {
       const res = await fetch("/api/state");
       if (res.ok) {
         const data = await res.json();
-        setState(data);
+        // We override trades with our local streamed trades
+        setState(prev => ({ ...data, trades: prev.trades }));
       }
     } catch (err) {
       console.warn("Express server polling standby; utilizing technical pricing simulation states.", err);
@@ -68,10 +84,53 @@ export default function App() {
 
   // Poll state every 2.5s for real-time tickers and continuous simulated active positions updates
   useEffect(() => {
+    if (!user) return;
+    
     fetchState();
     const interval = setInterval(fetchState, 2500);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    
+    // Subscribe to trades collection
+    const tradesQuery = query(collection(db, "trades"), orderBy("timestamp", "desc"), limit(50));
+    const unsub = onSnapshot(tradesQuery, (snapshot) => {
+      const fetchedTrades = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          symbol: data.symbol,
+          type: data.type,
+          price: data.price,
+          amount: data.amount,
+          pnl: data.pnl,
+          total: data.price * data.amount,
+          time: data.timestamp ? new Date(data.timestamp).toLocaleString() : new Date().toLocaleString(),
+        };
+      });
+      // @ts-ignore
+      setState(prev => ({ ...prev, trades: fetchedTrades }));
+    }, (error) => {
+      console.error("Firestore Error:", error);
+    });
+    
+    return () => unsub();
+  }, [user]);
+
+  if (authChecking) {
+    return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-mono">Initializing System Auth...</div>;
+  }
+  
+  if (!user) {
+    return <LoginView />;
+  }
+
+  const handleSignOut = () => {
+    signOut(auth);
+  };
+
 
   const handleToggleBot = async () => {
     try {
@@ -246,18 +305,28 @@ export default function App() {
         </div>
 
         {/* Sidebar Footer Info */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/20 font-mono text-[10px] text-slate-500 space-y-1.5 select-none">
-          <div className="flex items-center justify-between">
-            <span className="font-sans font-medium">Auto-Sync status:</span>
-            <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
-              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
-              ONLINE
-            </span>
+        <div className="p-4 border-t border-slate-800 bg-slate-950/20 font-mono text-[10px] text-slate-500 space-y-3 select-none">
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-sans font-medium">Auto-Sync status:</span>
+              <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
+                ONLINE
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-sans font-medium">Licensed Plan:</span>
+              <span className="text-slate-300 font-extrabold uppercase">{state.subscription.plan} BLOCK</span>
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="font-sans font-medium">Licensed Plan:</span>
-            <span className="text-slate-300 font-extrabold uppercase">{state.subscription.plan} BLOCK</span>
-          </div>
+          
+          <button 
+            onClick={handleSignOut}
+            className="w-full flex items-center justify-center gap-2 py-2 mt-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg transition-colors cursor-pointer"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="uppercase tracking-wider font-bold">Terminate Session</span>
+          </button>
         </div>
       </aside>
 

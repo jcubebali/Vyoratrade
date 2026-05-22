@@ -66,4 +66,5 @@ export interface CompleteState {
   };
   activePositions: any[];
   dataSource?: string;
+  binanceError?: string | null;
 }
