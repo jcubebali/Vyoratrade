@@ -61,19 +61,30 @@ export default function SettingsView({ state, onSaveSettings }: SettingsViewProp
         throw new Error("User must be logged in to save settings.");
       }
 
-      // Encrypt the secrets
-      // We use a derivation of the user uid as the encryption key (just for demonstration of client-side basic encryption)
-      const encryptionKey = user.uid + "-secret-key";
       const sanitizedKey = exchangeKey.trim();
       const sanitizedSecret = exchangeSecret.trim();
-      const encryptedApiKey = CryptoJS.AES.encrypt(sanitizedKey, encryptionKey).toString();
-      const encryptedApiSecret = CryptoJS.AES.encrypt(sanitizedSecret, encryptionKey).toString();
 
-      // Save to Firestore
+      // Send Binance API keys to robust, secure VPS endpoint instead of direct Firestore write
+      const vpsResponse = await fetch("http://152.42.248.130:8888/api/save-keys", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          secret: "SG_SECURE_TOKEN_123",
+          uid: user.uid,
+          apiKey: sanitizedKey,
+          apiSecret: sanitizedSecret
+        })
+      });
+
+      if (!vpsResponse.ok) {
+        throw new Error(`VPS request failed with status: ${vpsResponse.status} ${vpsResponse.statusText}`);
+      }
+
+      // Save other non-sensitive configurations directly to Firestore (with API keys excluded)
       const userRef = doc(db, "users", user.uid);
       await setDoc(userRef, {
-        binanceApiKey: encryptedApiKey,
-        binanceApiSecret: encryptedApiSecret,
         telegramBotId: telegramBotId.trim(),
         telegramChatId: telegramChatId.trim(),
         webhookToken
