@@ -256,9 +256,11 @@ function getActivePositions() {
 }
 
 let lastFetchSuccess = false;
+let currentFeedName = "STANDBY MEMORY SIMULATOR";
 
-// Async function to pull real-time cryptocurrency data from Binance Public API
+// Async function to pull real-time cryptocurrency data with robust fallbacks
 async function fetchBinancePrices() {
+  // Option 1: Try standard Binance Public API
   try {
     const res = await fetch('https://api.binance.com/api/v3/ticker/24hr?symbols=["BTCUSDT","ETHUSDT","SOLUSDT","BNBUSDT"]');
     if (res.ok) {
@@ -273,17 +275,12 @@ async function fetchBinancePrices() {
             signals[sym].price = price;
             signals[sym].change24h = change24h;
             
-            // Generate clean live technical indicators derived from true market variables
             const changeFactor = Math.min(20, Math.max(-20, change24h));
-            // Establish proportional strength (RSI) bounds mapping 30 to 75
             const baseRsi = 50 + changeFactor * 2.5;
             const rsi = Math.min(95, Math.max(10, parseFloat((baseRsi + (Math.random() - 0.5) * 4).toFixed(1))));
             signals[sym].rsi = rsi;
-            
-            // Smooth MACD
             signals[sym].macd = parseFloat((changeFactor * 0.75 + (Math.random() - 0.5) * 0.4).toFixed(2));
             
-            // Dynamically assign trend verdict
             if (rsi > 60) {
               signals[sym].trend = "BULLISH";
               signals[sym].verdict = "BUY";
@@ -300,13 +297,118 @@ async function fetchBinancePrices() {
           }
         }
         lastFetchSuccess = true;
+        currentFeedName = "LIVE MARKET DATA (BINANCE)";
         return;
       }
     }
   } catch (err) {
-    console.warn("Binance live public API rate-limiting or network block. Initiating live dynamic walkback simulator.", err);
+    console.warn("Binance public price feed blocked or rate-limited. Trying CryptoCompare fallback...", err);
   }
+
+  // Option 2: Try CryptoCompare Fallback (Unblocked, extremely fast, no keys required)
+  try {
+    const ccRes = await fetch('https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BTC,ETH,SOL,BNB&tsyms=USD');
+    if (ccRes.ok) {
+      const ccData = await ccRes.json();
+      if (ccData && ccData.RAW) {
+        const mappings: Record<string, string> = {
+          BTC: 'BTCUSDT',
+          ETH: 'ETHUSDT',
+          SOL: 'SOLUSDT',
+          BNB: 'BNBUSDT'
+        };
+        for (const [fsym, t_symbol] of Object.entries(mappings)) {
+          const rawData = ccData.RAW[fsym]?.USD;
+          if (rawData && signals[t_symbol]) {
+            const price = parseFloat(rawData.PRICE);
+            const change24h = parseFloat(rawData.CHANGEPCT24HOUR);
+            
+            signals[t_symbol].price = price;
+            signals[t_symbol].change24h = change24h;
+            
+            const changeFactor = Math.min(20, Math.max(-20, change24h));
+            const baseRsi = 50 + changeFactor * 2.5;
+            const rsi = Math.min(95, Math.max(10, parseFloat((baseRsi + (Math.random() - 0.5) * 4).toFixed(1))));
+            signals[t_symbol].rsi = rsi;
+            signals[t_symbol].macd = parseFloat((changeFactor * 0.75 + (Math.random() - 0.5) * 0.4).toFixed(2));
+            
+            if (rsi > 60) {
+              signals[t_symbol].trend = "BULLISH";
+              signals[t_symbol].verdict = "BUY";
+              signals[t_symbol].confidence = "HIGH";
+            } else if (rsi < 40) {
+              signals[t_symbol].trend = "BEARISH";
+              signals[t_symbol].verdict = "SELL";
+              signals[t_symbol].confidence = "MEDIUM";
+            } else {
+              signals[t_symbol].trend = "NEUTRAL";
+              signals[t_symbol].verdict = "HOLD";
+              signals[t_symbol].confidence = "LOW";
+            }
+          }
+        }
+        lastFetchSuccess = true;
+        currentFeedName = "LIVE MARKET DATA (CRYPTOCOMPARE)";
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn("CryptoCompare price feed fallback also failed. Trying CoinGecko fallback...", err);
+  }
+
+  // Option 3: Try CoinGecko Fallback
+  try {
+    const cgRes = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,binancecoin&vs_currencies=usd&include_24hr_change=true');
+    if (cgRes.ok) {
+      const cgData = await cgRes.json();
+      if (cgData) {
+        const mappings: Record<string, string> = {
+          bitcoin: 'BTCUSDT',
+          ethereum: 'ETHUSDT',
+          solana: 'SOLUSDT',
+          binancecoin: 'BNBUSDT'
+        };
+        for (const [cgId, t_symbol] of Object.entries(mappings)) {
+          const coinData = cgData[cgId];
+          if (coinData && signals[t_symbol]) {
+            const price = parseFloat(coinData.usd);
+            const change24h = parseFloat(coinData.usd_24h_change);
+            
+            signals[t_symbol].price = price;
+            signals[t_symbol].change24h = change24h;
+            
+            const changeFactor = Math.min(20, Math.max(-20, change24h));
+            const baseRsi = 50 + changeFactor * 2.5;
+            const rsi = Math.min(95, Math.max(10, parseFloat((baseRsi + (Math.random() - 0.5) * 4).toFixed(1))));
+            signals[t_symbol].rsi = rsi;
+            signals[t_symbol].macd = parseFloat((changeFactor * 0.75 + (Math.random() - 0.5) * 0.4).toFixed(2));
+            
+            if (rsi > 60) {
+              signals[t_symbol].trend = "BULLISH";
+              signals[t_symbol].verdict = "BUY";
+              signals[t_symbol].confidence = "HIGH";
+            } else if (rsi < 40) {
+              signals[t_symbol].trend = "BEARISH";
+              signals[t_symbol].verdict = "SELL";
+              signals[t_symbol].confidence = "MEDIUM";
+            } else {
+              signals[t_symbol].trend = "NEUTRAL";
+              signals[t_symbol].verdict = "HOLD";
+              signals[t_symbol].confidence = "LOW";
+            }
+          }
+        }
+        lastFetchSuccess = true;
+        currentFeedName = "LIVE MARKET DATA (COINGECKO)";
+        return;
+      }
+    }
+  } catch (err) {
+    console.error("All live public price feeds blocked. Resorting to memory simulator.", err);
+  }
+
   lastFetchSuccess = false;
+  currentFeedName = "STANDBY MEMORY SIMULATOR";
 }
 
 // Global pricing feed simulator loop (runs every 3 seconds to update prices from real Binance feed or walk fallback)
@@ -590,7 +692,7 @@ app.get("/api/state", async (req, res) => {
       cashUsdt: userCashUsdt,
     },
     activePositions: getActivePositions(),
-    dataSource: (binanceAccount && !binanceAccount.error ? "LIVE PRIVATE BINANCE API" : (lastFetchSuccess ? "LIVE PUBLIC BINANCE API" : "STANDBY MEMORY SIMULATOR")),
+    dataSource: (binanceAccount && !binanceAccount.error ? "LIVE PRIVATE BINANCE API" : currentFeedName),
     binanceError
   });
 });
