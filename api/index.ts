@@ -84,6 +84,12 @@ const app = express();
 
 app.use(express.json());
 
+// Set Cross-Origin-Opener-Policy header to allow Google Login popups
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  next();
+});
+
 // Main simulation state kept in server-side memory
 let cashUsdt = 12450.75;
 
