@@ -36,6 +36,45 @@ export default function SettingsView({ state, onSaveSettings }: SettingsViewProp
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [serverIp, setServerIp] = useState<string | null>(null);
 
+  const [balUsdt, setBalUsdt] = useState(() => (state.assets.find(a => a.symbol === "USDT")?.amount ?? 12450.75).toString());
+  const [balBtc, setBalBtc] = useState(() => (state.assets.find(a => a.symbol === "BTC")?.amount ?? 0.15).toString());
+  const [balEth, setBalEth] = useState(() => (state.assets.find(a => a.symbol === "ETH")?.amount ?? 2.22).toString());
+  const [balSol, setBalSol] = useState(() => (state.assets.find(a => a.symbol === "SOL")?.amount ?? 15.54).toString());
+  const [balBnb, setBalBnb] = useState(() => (state.assets.find(a => a.symbol === "BNB")?.amount ?? 0).toString());
+
+  const [isSavingBal, setIsSavingBal] = useState(false);
+  const [balSuccess, setBalSuccess] = useState(false);
+
+  const handleSaveBalances = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSavingBal(true);
+    setBalSuccess(false);
+    try {
+      const res = await fetch("/api/bot/holdings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          USDT: parseFloat(balUsdt) || 0,
+          BTC: parseFloat(balBtc) || 0,
+          ETH: parseFloat(balEth) || 0,
+          SOL: parseFloat(balSol) || 0,
+          BNB: parseFloat(balBnb) || 0,
+        })
+      });
+      if (res.ok) {
+        setBalSuccess(true);
+        setTimeout(() => {
+          setBalSuccess(false);
+          window.location.reload();
+        }, 1000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingBal(false);
+    }
+  };
+
   useEffect(() => {
     fetch("/api/server-ip")
       .then(res => res.json())
@@ -371,6 +410,103 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
               className="bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-800 text-white font-bold px-5 py-2.5 rounded-xl cursor-pointer select-none text-xs tracking-wider uppercase flex items-center gap-1 transition font-sans"
             >
               {isSaving ? "LOCKING..." : "SAVE INTEGRATION SECRETS"}
+            </button>
+          </div>
+        </form>
+
+        {/* Manual Holdings Configuration Override Form */}
+        <form id="holdings-form" onSubmit={handleSaveBalances} className="lg:col-span-2 p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3 select-none">
+            <h3 className="text-xs font-semibold text-slate-300 font-mono uppercase tracking-wider flex items-center gap-2">
+              <Cpu className="h-4.5 w-4.5 text-indigo-400" />
+              <span>Balance Configuration Override</span>
+            </h3>
+            <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono font-bold uppercase mt-0.5">
+              Manual Override
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-400 leading-relaxed font-sans select-none">
+            Karena pembatasan IP geografis (geo-restriction) atau whitelisting Binance API dari VPS bot Singapura Anda, dashboard visual terkadang tidak dapat melakukan verifikasi saldo secara langsung. Anda dapat memasukkan atau menyesuaikan saldo riil aset Anda di bawah untuk mensimulasikan visualisasi portofolio yang akurat.
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            {/* USDT Balance */}
+            <div>
+              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">USDT Balance</label>
+              <input
+                type="number"
+                step="any"
+                value={balUsdt}
+                onChange={(e) => setBalUsdt(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+                placeholder="12450.75"
+              />
+            </div>
+            {/* BTC Balance */}
+            <div>
+              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">BTC Balance</label>
+              <input
+                type="number"
+                step="any"
+                value={balBtc}
+                onChange={(e) => setBalBtc(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+                placeholder="0.15"
+              />
+            </div>
+            {/* ETH Balance */}
+            <div>
+              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">ETH Balance</label>
+              <input
+                type="number"
+                step="any"
+                value={balEth}
+                onChange={(e) => setBalEth(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+                placeholder="2.22"
+              />
+            </div>
+            {/* SOL Balance */}
+            <div>
+              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">SOL Balance</label>
+              <input
+                type="number"
+                step="any"
+                value={balSol}
+                onChange={(e) => setBalSol(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+                placeholder="15.54"
+              />
+            </div>
+            {/* BNB Balance */}
+            <div className="col-span-2 sm:col-span-1">
+              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">BNB Balance</label>
+              <input
+                type="number"
+                step="any"
+                value={balBnb}
+                onChange={(e) => setBalBnb(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+                placeholder="0.0"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center pt-3 border-t border-slate-800/60 mt-3 gap-3">
+            <div className="flex-1">
+              {balSuccess && (
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1 font-sans animate-pulse">
+                  <Check className="h-4 w-4" /> Saldo Berhasil Diperbarui & Disinkronkan!
+                </span>
+              )}
+            </div>
+            <button
+              type="submit"
+              disabled={isSavingBal}
+              className="bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl cursor-pointer select-none text-[10px] tracking-wider uppercase flex items-center gap-1 transition font-sans"
+            >
+              {isSavingBal ? "SYNCHRONIZING..." : "SYNCHRONIZE BALANCES"}
             </button>
           </div>
         </form>

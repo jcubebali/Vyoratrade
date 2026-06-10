@@ -106,6 +106,38 @@ let settings = {
   groqApiKey: "",
 };
 
+let customHoldings: Record<string, number> = {
+  USDT: 12450.75,
+  BTC: 0.15,
+  ETH: 2.22,
+  SOL: 15.54,
+  BNB: 0.0,
+};
+
+async function loadPersistedData() {
+  if (!db) return;
+  try {
+    const settingsDoc = await db.collection("config").doc("settings").get();
+    if (settingsDoc.exists) {
+      settings = { ...settings, ...settingsDoc.data() };
+      console.log("Loaded settings from Firestore.");
+    }
+    const holdingsDoc = await db.collection("config").doc("holdings").get();
+    if (holdingsDoc.exists) {
+      customHoldings = { ...customHoldings, ...holdingsDoc.data() };
+      if (customHoldings.USDT !== undefined) {
+        cashUsdt = customHoldings.USDT;
+      }
+      console.log("Loaded customHoldings from Firestore.");
+    }
+  } catch (err) {
+    console.warn("Failed to load persisted data from Firestore:", err);
+  }
+}
+
+// Call on startup
+loadPersistedData();
+
 let subscription = {
   plan: "free",
   isActive: true,
@@ -669,22 +701,27 @@ app.get("/api/state", async (req, res) => {
            assets.unshift({ symbol: 'USDT', amount: 0, price: 1.0, change24h: 0 });
         }
     }
-  } else if (binanceAccount && binanceAccount.error) {
-    binanceError = binanceAccount.error;
-    // Fallback to demo data
-    assets = [
-      { symbol: "USDT", amount: parseFloat((cashUsdt).toFixed(2)), price: 1.0, change24h: 0.00 },
-      { symbol: "BTC", amount: 0.15, price: signals["BTCUSDT"].price, change24h: signals["BTCUSDT"].change24h },
-      { symbol: "ETH", amount: 2.22, price: signals["ETHUSDT"].price, change24h: signals["ETHUSDT"].change24h },
-      { symbol: "SOL", amount: 15.54, price: signals["SOLUSDT"].price, change24h: signals["SOLUSDT"].change24h },
-    ];
   } else {
-    assets = [
-      { symbol: "USDT", amount: parseFloat((cashUsdt).toFixed(2)), price: 1.0, change24h: 0.00 },
-      { symbol: "BTC", amount: 0.15, price: signals["BTCUSDT"].price, change24h: signals["BTCUSDT"].change24h },
-      { symbol: "ETH", amount: 2.22, price: signals["ETHUSDT"].price, change24h: signals["ETHUSDT"].change24h },
-      { symbol: "SOL", amount: 15.54, price: signals["SOLUSDT"].price, change24h: signals["SOLUSDT"].change24h },
-    ];
+    binanceError = binanceAccount?.error || null;
+    const list = [];
+    for (const [symbol, amount] of Object.entries(customHoldings)) {
+      if (amount <= 0 && symbol !== "USDT") continue;
+      let price = 1.0;
+      let change24h = 0;
+      if (symbol !== "USDT") {
+        const signal = signals[`${symbol}USDT`] || signals[symbol];
+        if (signal) {
+          price = signal.price;
+          change24h = signal.change24h;
+        } else {
+          price = 0;
+        }
+      } else {
+        userCashUsdt = amount;
+      }
+      list.push({ symbol, amount, price, change24h });
+    }
+    assets = list.sort((a: any, b: any) => (b.amount * b.price) - (a.amount * a.price));
   }
 
   res.json({
@@ -719,7 +756,7 @@ app.post("/api/bot/config", (req, res) => {
   res.json({ success: true, botConfig });
 });
 
-app.post("/api/bot/settings", (req, res) => {
+app.post("/api/bot/settings", async (req, res) => {
   const { binanceApiKey, binanceSecret, telegramBotId, telegramChatId, groqApiKey, webhookToken } = req.body;
   settings.binanceApiKey = binanceApiKey || "";
   settings.binanceSecret = binanceSecret || "";
@@ -728,6 +765,9 @@ app.post("/api/bot/settings", (req, res) => {
   settings.groqApiKey = groqApiKey || "";
   if (webhookToken !== undefined) {
     (settings as any).webhookToken = webhookToken;
+  }
+  if (db) {
+    await db.collection("config").doc("settings").set(settings).catch((e: any) => console.error(e));
   }
   res.json({ success: true, settings });
 });
@@ -852,8 +892,8 @@ app.post("/api/webhook/trade", async (req, res) => {
   return res.status(200).json({ success: true, ...(firestoreId ? { firestoreId } : {}) });
 });
 
-app.post("/api/webhook/balance", (req, res) => {
-  const { cash, secret } = req.body;
+app.post("/api/webhook/balance", async (req, res) => {
+  const { cash, secret, assets: webhookAssets } = req.body;
   const configuredToken = (settings as any).webhookToken || "SG_SECURE_TOKEN_123";
   
   if (secret && secret !== configuredToken) {
@@ -862,10 +902,41 @@ app.post("/api/webhook/balance", (req, res) => {
 
   if (cash !== undefined) {
     cashUsdt = parseFloat(cash);
-    res.json({ success: true, cashUsdt });
+    customHoldings.USDT = cashUsdt;
+    
+    if (webhookAssets && Array.isArray(webhookAssets)) {
+      for (const asset of webhookAssets) {
+        if (asset.symbol && asset.amount !== undefined) {
+          customHoldings[asset.symbol] = parseFloat(asset.amount);
+        }
+      }
+    }
+    
+    if (db) {
+      await db.collection("config").doc("holdings").set(customHoldings).catch((e: any) => console.error(e));
+    }
+    
+    res.json({ success: true, cashUsdt, customHoldings });
   } else {
     res.status(400).json({ error: "No cash balance provided" });
   }
+});
+
+app.post("/api/bot/holdings", async (req, res) => {
+  const { USDT, BTC, ETH, SOL, BNB } = req.body;
+  if (USDT !== undefined) {
+    customHoldings.USDT = parseFloat(USDT);
+    cashUsdt = parseFloat(USDT);
+  }
+  if (BTC !== undefined) customHoldings.BTC = parseFloat(BTC);
+  if (ETH !== undefined) customHoldings.ETH = parseFloat(ETH);
+  if (SOL !== undefined) customHoldings.SOL = parseFloat(SOL);
+  if (BNB !== undefined) customHoldings.BNB = parseFloat(BNB);
+
+  if (db) {
+    await db.collection("config").doc("holdings").set(customHoldings).catch((e: any) => console.error(e));
+  }
+  res.json({ success: true, customHoldings });
 });
 
 app.post("/api/billing/upgrade", (req, res) => {
