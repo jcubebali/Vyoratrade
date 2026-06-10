@@ -939,6 +939,67 @@ app.post("/api/bot/holdings", async (req, res) => {
   res.json({ success: true, customHoldings });
 });
 
+app.post("/api/bot/withdraw-metamask", async (req, res) => {
+  const { amount, address, txHash } = req.body;
+  
+  const parsedAmount = parseFloat(amount);
+  if (isNaN(parsedAmount) || parsedAmount <= 0) {
+    return res.status(400).json({ error: "Invalid amount to transfer." });
+  }
+  if (!address || !address.startsWith("0x") || address.length !== 42) {
+    return res.status(400).json({ error: "Invalid MetaMask address." });
+  }
+
+  // Deduct from customHoldings.USDT
+  const currentUsdt = customHoldings.USDT !== undefined ? customHoldings.USDT : 12450.75;
+  if (parsedAmount > currentUsdt) {
+    return res.status(400).json({ error: "Insufficient USDT balance in Vyora portfolio." });
+  }
+
+  customHoldings.USDT = parseFloat((currentUsdt - parsedAmount).toFixed(2));
+  cashUsdt = customHoldings.USDT;
+
+  const generatedTxHash = txHash || "0x" + crypto.randomBytes(32).toString("hex");
+
+  if (db) {
+    try {
+      await db.collection("config").doc("holdings").set(customHoldings);
+      
+      // Save transfer to db collection trades
+      await db.collection("trades").add({
+        symbol: "USDT",
+        type: "WITHDRAW",
+        price: 1.0,
+        amount: parsedAmount,
+        pnl: 0,
+        address: address,
+        txHash: generatedTxHash,
+        timestamp: new Date().toISOString()
+      });
+      console.log(`Successfully stored MetaMask USDT withdrawal in Firestore. Address: ${address}, Hash: ${generatedTxHash}`);
+    } catch (e: any) {
+      console.error("Failed to write withdrawal to Firestore:", e);
+    }
+  } else {
+    // Local memory fallback if Firestore is not initialized/accessible
+    const memoryTrade = {
+      id: "TR-" + Math.floor(9000 + Math.random() * 1000),
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      symbol: "USDT",
+      type: "WITHDRAW",
+      price: 1.0,
+      amount: parsedAmount,
+      total: parsedAmount,
+      status: "COMPLETED",
+      txHash: generatedTxHash,
+      address: address
+    };
+    trades.push(memoryTrade);
+  }
+
+  res.json({ success: true, cashUsdt, customHoldings });
+});
+
 app.post("/api/billing/upgrade", (req, res) => {
   const { plan } = req.body;
   if (plan) {

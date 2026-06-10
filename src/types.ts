@@ -14,12 +14,14 @@ export interface Trade {
   id: string;
   time: string;
   symbol: string;
-  type: "BUY" | "SELL";
+  type: "BUY" | "SELL" | "WITHDRAW";
   price: number;
   amount: number;
   total: number;
   status: "COMPLETED" | "PENDING";
   pnl?: number;
+  address?: string;
+  txHash?: string;
 }
 
 export interface Asset {

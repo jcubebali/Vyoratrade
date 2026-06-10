@@ -3,7 +3,9 @@ import {
   ArrowDownLeft, 
   HelpCircle, 
   CheckCircle, 
-  Clock 
+  Clock,
+  ExternalLink,
+  Wallet
 } from "lucide-react";
 import { CompleteState, Trade } from "../types";
 
@@ -60,6 +62,7 @@ export default function TradesView({ state }: TradesViewProps) {
               <tbody className="divide-y divide-slate-800/50 text-slate-350">
                 {trades.map((tr: Trade) => {
                   const isBuy = tr.type === "BUY";
+                  const isWithdraw = tr.type === "WITHDRAW";
                   return (
                     <tr key={tr.id} className="hover:bg-slate-950/20 transition-all font-mono">
                       {/* Time / ID */}
@@ -70,28 +73,35 @@ export default function TradesView({ state }: TradesViewProps) {
 
                       {/* Asset Symbol */}
                       <td className="py-4 px-4 font-sans font-extrabold text-slate-200">
-                        {tr.symbol}
+                        <div>
+                          <span>{tr.symbol}</span>
+                          {isWithdraw && tr.address && (
+                            <p className="text-[9px] font-mono font-normal text-slate-500 mt-0.5 flex items-center gap-1">
+                              <Wallet className="h-3 w-3 text-amber-500/80" />
+                              <span className="text-slate-400">to {tr.address.slice(0, 6)}...{tr.address.slice(-4)}</span>
+                            </p>
+                          )}
+                        </div>
                       </td>
 
                       {/* Trade Type */}
                       <td className="py-4 px-4 text-center">
-                        <span className={`inline-flex items-center gap-1 leading-none rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                          isBuy 
-                            ? "bg-emerald-500/10 text-emerald-400" 
-                            : "bg-rose-500/10 text-rose-400"
-                        }`}>
-                          {isBuy ? (
-                            <>
-                              <ArrowUpRight className="h-2.5 w-2.5" />
-                              <span>BUY / ENTRY</span>
-                            </>
-                          ) : (
-                            <>
-                              <ArrowDownLeft className="h-2.5 w-2.5" />
-                              <span>SELL / EXIT</span>
-                            </>
-                          )}
-                        </span>
+                        {isWithdraw ? (
+                          <span className="inline-flex items-center gap-1 leading-none rounded-full px-2.5 py-1 text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                            <Wallet className="h-2.5 w-2.5" />
+                            <span>METAMASK OUT</span>
+                          </span>
+                        ) : isBuy ? (
+                          <span className="inline-flex items-center gap-1 leading-none rounded-full px-2.5 py-1 text-[10px] font-bold bg-emerald-500/10 text-emerald-400">
+                            <ArrowUpRight className="h-2.5 w-2.5" />
+                            <span>BUY / ENTRY</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 leading-none rounded-full px-2.5 py-1 text-[10px] font-bold bg-rose-500/10 text-rose-400">
+                            <ArrowDownLeft className="h-2.5 w-2.5" />
+                            <span>SELL / EXIT</span>
+                          </span>
+                        )}
                       </td>
 
                       {/* Unit Price */}
@@ -111,7 +121,21 @@ export default function TradesView({ state }: TradesViewProps) {
 
                       {/* Realized PNL */}
                       <td className="py-4 px-4 text-right">
-                        {tr.pnl !== undefined ? (
+                        {isWithdraw ? (
+                          tr.txHash ? (
+                            <a
+                              href={`https://etherscan.io/tx/${tr.txHash}`}
+                              target="_blank"
+                              referrerPolicy="no-referrer"
+                              className="inline-flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 transition-colors uppercase font-bold"
+                            >
+                              <span>TX HASH</span>
+                              <ExternalLink className="h-3 w-3" />
+                            </a>
+                          ) : (
+                            <span className="text-slate-500 font-medium">—</span>
+                          )
+                        ) : tr.pnl !== undefined ? (
                           <span className={`font-bold ${tr.pnl >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
                             {tr.pnl >= 0 ? "+" : ""}${tr.pnl.toFixed(2)}
                           </span>
