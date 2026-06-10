@@ -64,8 +64,8 @@ export default function SettingsView({ state, onSaveSettings }: SettingsViewProp
       const sanitizedKey = exchangeKey.trim();
       const sanitizedSecret = exchangeSecret.trim();
 
-      // Send Binance API keys to robust, secure VPS endpoint instead of direct Firestore write
-      const vpsResponse = await fetch("http://152.42.248.130:8888/api/save-keys", {
+      // Send Binance API keys to secure server-side Proxy endpoint to prevent mixed-content & CORS blocks
+      const vpsResponse = await fetch("/api/save-keys", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

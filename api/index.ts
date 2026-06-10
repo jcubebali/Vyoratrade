@@ -620,6 +620,48 @@ app.post("/api/bot/settings", (req, res) => {
   res.json({ success: true, settings });
 });
 
+// Secure Proxy intermediate endpoint to forward API keys to the private VPS
+app.post("/api/save-keys", async (req, res) => {
+  const { secret, uid, apiKey, apiSecret } = req.body;
+  
+  try {
+    const vpsResponse = await fetch("http://152.42.248.130:8888/api/save-keys", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        secret: secret || "SG_SECURE_TOKEN_123",
+        uid,
+        apiKey,
+        apiSecret
+      })
+    });
+
+    if (!vpsResponse.ok) {
+      const errText = await vpsResponse.text();
+      return res.status(vpsResponse.status).json({ 
+        error: `VPS save-keys failed: ${vpsResponse.statusText}`, 
+        details: errText 
+      });
+    }
+
+    const data = await vpsResponse.json();
+    
+    // Smoothly update local server settings cache to synchronize State View
+    if (apiKey) settings.binanceApiKey = apiKey;
+    if (apiSecret) settings.binanceSecret = apiSecret;
+
+    return res.json({ success: true, data });
+  } catch (error: any) {
+    console.error("Error proxying save-keys to VPS:", error);
+    return res.status(500).json({ 
+      error: "Failed to connect to the secure VPS synchronization engine.", 
+      details: error.message 
+    });
+  }
+});
+
 // Real-time external webhook endpoint for your Singapore Bot
 app.post("/api/webhook/trade", async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
