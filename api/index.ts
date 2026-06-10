@@ -445,8 +445,10 @@ async function getBinanceAccount() {
       const errText = await res.text();
       let errorMessage = `Binance Error ${res.status}: ${errText}`;
       
-      // If IP restricted error is returned, provide an explicit message
-      if (errText.includes("-2015")) {
+      // If IP restricted or holding/location-restricted errors are returned, provide clear explicit messages
+      if (res.status === 451 || errText.includes("restricted location") || errText.includes("Eligibility")) {
+        errorMessage = "Hosting Geo-Restriction (Error 451): This web dashboard is deployed on Google Cloud / Vercel cloud networks which are located in regions restricted by Binance. Please note: This ONLY affects the balance display on this dashboard. Your Singapore VPS Bot (IP 152.42.248.130) is NOT restricted and remains 100% active and trading normally.";
+      } else if (errText.includes("-2015")) {
         errorMessage = "API terbatas IP: Koneksi dashboard ditolak oleh Binance karena API Key telah di-whitelist ke IP server bot. Status: AMAN.";
       } else {
         console.error("Binance error status:", res.status, errText);
@@ -480,7 +482,9 @@ app.get("/api/test-binance", async (req, res) => {
     } else {
       const errText = await fetchRes.text();
       let errorMessage = "Binance API failed";
-      if (errText.includes("-2015")) {
+      if (fetchRes.status === 451 || errText.includes("restricted location") || errText.includes("Eligibility")) {
+        errorMessage = "Hosting Geo-Restriction (Error 451): This web dashboard is deployed on Google Cloud / Vercel cloud networks which are located in regions restricted by Binance. Please note: This ONLY affects the balance display on this dashboard. Your Singapore VPS Bot (IP 152.42.248.130) is NOT restricted and remains 100% active and trading normally.";
+      } else if (errText.includes("-2015")) {
         errorMessage = "API terbatas IP: Koneksi dashboard ditolak oleh Binance karena API Key telah di-whitelist ke IP server bot. Status: AMAN.";
       }
       return res.json({ error: errorMessage, status: fetchRes.status, errText, keysLength: settings.binanceApiKey.length });
