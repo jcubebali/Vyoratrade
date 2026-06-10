@@ -257,6 +257,7 @@ function getActivePositions() {
 
 let lastFetchSuccess = false;
 let currentFeedName = "STANDBY MEMORY SIMULATOR";
+let lastFetchTime = 0;
 
 // Async function to pull real-time cryptocurrency data with robust fallbacks
 async function fetchBinancePrices() {
@@ -608,19 +609,24 @@ app.get("/api/server-ip", async (req, res) => {
 
 // Core API endpoints
 app.get("/api/state", async (req, res) => {
-  // On serverless Vercel, background intervals don't tick. Update market indicators dynamically.
-  if (process.env.VERCEL) {
+  // Always fetch real price data during API request to bypass lack of background CPU allocation in container environments.
+  // Rate limited to once every 4 seconds to maintain extreme speed.
+  const now = Date.now();
+  if (now - lastFetchTime > 4000) {
+    lastFetchTime = now;
     await fetchBinancePrices();
-    if (!lastFetchSuccess) {
-      for (const sym of Object.keys(signals)) {
-        const coin = signals[sym];
-        const fluctuationPercent = (Math.random() - 0.49) * 0.003;
-        coin.price = parseFloat((coin.price * (1 + fluctuationPercent)).toFixed(2));
-        const dailyFluctuation = (Math.random() - 0.47) * 0.15;
-        coin.change24h = parseFloat((coin.change24h + dailyFluctuation).toFixed(3));
-        coin.rsi = Math.min(95, Math.max(10, parseFloat((coin.rsi + (Math.random() - 0.5) * 1.5).toFixed(1))));
-        coin.macd = parseFloat((coin.macd + (Math.random() - 0.5) * 0.5).toFixed(2));
-      }
+  }
+
+  // If live fetches failed, keep updating by dynamic walkback fluctuation
+  if (!lastFetchSuccess) {
+    for (const sym of Object.keys(signals)) {
+      const coin = signals[sym];
+      const fluctuationPercent = (Math.random() - 0.49) * 0.003;
+      coin.price = parseFloat((coin.price * (1 + fluctuationPercent)).toFixed(2));
+      const dailyFluctuation = (Math.random() - 0.47) * 0.15;
+      coin.change24h = parseFloat((coin.change24h + dailyFluctuation).toFixed(3));
+      coin.rsi = Math.min(95, Math.max(10, parseFloat((coin.rsi + (Math.random() - 0.5) * 1.5).toFixed(1))));
+      coin.macd = parseFloat((coin.macd + (Math.random() - 0.5) * 0.5).toFixed(2));
     }
   }
 
