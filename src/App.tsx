@@ -165,15 +165,9 @@ export default function App() {
   };
 
   const handleSaveSettings = async (updates: any) => {
-    try {
-      await fetch("/api/bot/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates)
-      });
-      
-      if (updates.binanceApiKey && updates.binanceSecret && user) {
-        await fetch('http://152.42.248.130:8888/api/save-keys', {
+    if (updates.binanceApiKey && updates.binanceSecret && user) {
+      try {
+        const res = await fetch('http://152.42.248.130:8888/api/save-keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -183,9 +177,10 @@ export default function App() {
             apiSecret: updates.binanceSecret
           })
         });
+        if (res.ok) console.log('API keys saved securely to VPS');
+      } catch (err) {
+        console.error('Failed to save API keys:', err);
       }
-    } catch (err) {
-      console.error(err);
     }
   };
 
