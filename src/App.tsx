@@ -31,26 +31,16 @@ import LoginView from "./components/LoginView";
 
 import { auth, db } from "./firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit, doc, where } from "firebase/firestore";
 
 const DEFAULT_STATE: CompleteState = {
-  signals: {
-    BTCUSDT: { symbol: "BTCUSDT", price: 92450.00, change24h: 3.42, rsi: 44.5, macd: 12.8, trend: "BULLISH", verdict: "BUY", confidence: "HIGH", aiAnalysis: "" },
-    ETHUSDT: { symbol: "ETHUSDT", price: 3125.50, change24h: -1.15, rsi: 38.2, macd: -4.5, trend: "BEARISH", verdict: "HOLD", confidence: "MEDIUM", aiAnalysis: "" },
-    SOLUSDT: { symbol: "SOLUSDT", price: 242.80, change24h: 8.75, rsi: 68.9, macd: 3.4, trend: "BULLISH", verdict: "BUY", confidence: "HIGH", aiAnalysis: "" },
-    BNBUSDT: { symbol: "BNBUSDT", price: 618.40, change24h: 0.25, rsi: 52.1, macd: 0.8, trend: "NEUTRAL", verdict: "HOLD", confidence: "LOW", aiAnalysis: "" }
-  },
-  botConfig: { isActive: false, strategy: "EMA_CROSS + RSI", symbol: "SOLUSDT", stopLoss: 2.5, takeProfit: 5.0, trailingStop: 0.5, capital: 1500, leverage: 10, maxRam: 512, slTpMode: "PRICE" },
+  signals: {},
+  botConfig: { isActive: false, strategy: "", symbol: "", stopLoss: 0, takeProfit: 0, trailingStop: 0, capital: 0, leverage: 1, maxRam: 0, slTpMode: "PRICE" },
   trades: [],
-  assets: [
-    { symbol: "USDT", amount: 12450.75, price: 1.0, change24h: 0.0 },
-    { symbol: "BTC", amount: 0.15, price: 92450.0, change24h: 3.42 },
-    { symbol: "ETH", amount: 2.22, price: 3125.5, change24h: -1.15 },
-    { symbol: "SOL", amount: 15.54, price: 242.8, change24h: 8.75 },
-  ],
-  subscription: { plan: "free", isActive: true },
+  assets: [],
+  subscription: { plan: "trial", isActive: false },
   settings: { binanceApiKey: "", binanceSecret: "", telegramBotId: "", telegramChatId: "", groqApiKey: "" },
-  balance: { cashUsdt: 12450.75 },
+  balance: { cashUsdt: 0 },
   activePositions: []
 };
 
@@ -62,11 +52,74 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
+    let unsubUserDoc: (() => void) | undefined;
+    let unsubTrades: (() => void) | undefined;
+
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      setUser(user);
       setAuthChecking(false);
+
+      if (user) {
+        // Listen to user document
+        const userRef = doc(db, "users", user.uid);
+        unsubUserDoc = onSnapshot(userRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            setState(prev => ({
+              ...prev,
+              balance: { cashUsdt: data.totalUsdt || 0 },
+              subscription: { plan: data.plan || "trial", isActive: true },
+              userData: {
+                totalPnl: data.totalPnl || 0,
+                winRate: data.winRate || 0,
+                totalTrades: data.totalTrades || 0,
+                botStatus: data.botStatus || "STOPPED",
+                botCycle: data.botCycle || 0,
+                openPosition: data.openPosition || null,
+                name: data.name || ""
+              }
+            }));
+          }
+        });
+
+        // Listen to user trades only
+        const tradesQuery = query(
+          collection(db, "trades"),
+          where("uid", "==", user.uid),
+          orderBy("timestamp", "desc"),
+          limit(50)
+        );
+        unsubTrades = onSnapshot(tradesQuery, (snapshot) => {
+          const tradesData = snapshot.docs.map(dDoc => {
+            const data = dDoc.data();
+            return {
+              id: dDoc.id,
+              time: data.timestamp ? new Date(data.timestamp).toLocaleString() : new Date().toLocaleString(),
+              symbol: data.symbol || "",
+              type: data.type || "BUY",
+              price: data.price || 0,
+              amount: data.amount || 0,
+              total: (data.price || 0) * (data.amount || 0),
+              status: data.status || "COMPLETED",
+              pnl: data.pnl,
+              address: data.address,
+              txHash: data.txHash
+            };
+          });
+          // @ts-ignore
+          setState(prev => ({ ...prev, trades: tradesData }));
+        });
+      } else {
+        if (unsubUserDoc) { unsubUserDoc(); unsubUserDoc = undefined; }
+        if (unsubTrades) { unsubTrades(); unsubTrades = undefined; }
+      }
     });
-    return () => unsub();
+
+    return () => {
+      unsubAuth();
+      if (unsubUserDoc) unsubUserDoc();
+      if (unsubTrades) unsubTrades();
+    };
   }, []);
 
   const fetchState = async () => {
@@ -74,49 +127,19 @@ export default function App() {
       const res = await fetch("/api/state");
       if (res.ok) {
         const data = await res.json();
-        // We override trades with our local streamed trades
-        setState(prev => ({ ...data, trades: prev.trades }));
+        // Keep trades, balance and subscription from our real-time Firestore synchronization
+        setState(prev => ({ ...data, trades: prev.trades, balance: prev.balance, subscription: prev.subscription }));
       }
     } catch (err) {
-      console.warn("Express server polling standby; utilizing technical pricing simulation states.", err);
+      console.warn("Express server standby; utilizing technical pricing simulation states.", err);
     }
   };
 
-  // Poll state every 2.5s for real-time tickers and continuous simulated active positions updates
+  // Fetch state once on mount / login
   useEffect(() => {
-    if (!user) return;
-    
-    fetchState();
-    const interval = setInterval(fetchState, 2500);
-    return () => clearInterval(interval);
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-    
-    // Subscribe to trades collection
-    const tradesQuery = query(collection(db, "trades"), orderBy("timestamp", "desc"), limit(50));
-    const unsub = onSnapshot(tradesQuery, (snapshot) => {
-      const fetchedTrades = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          symbol: data.symbol,
-          type: data.type,
-          price: data.price,
-          amount: data.amount,
-          pnl: data.pnl,
-          total: data.price * data.amount,
-          time: data.timestamp ? new Date(data.timestamp).toLocaleString() : new Date().toLocaleString(),
-        };
-      });
-      // @ts-ignore
-      setState(prev => ({ ...prev, trades: fetchedTrades }));
-    }, (error) => {
-      console.error("Firestore Error:", error);
-    });
-    
-    return () => unsub();
+    if (user) {
+      fetchState();
+    }
   }, [user]);
 
   if (authChecking) {

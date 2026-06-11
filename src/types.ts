@@ -71,6 +71,16 @@ export interface Position {
   pnlPercent: number;
 }
 
+export interface UserData {
+  totalPnl: number;
+  winRate: number;
+  totalTrades: number;
+  botStatus: string;
+  botCycle: number;
+  openPosition: any;
+  name: string;
+}
+
 export interface CompleteState {
   signals: Record<string, MarketSignal>;
   botConfig: BotConfig;
@@ -84,4 +94,5 @@ export interface CompleteState {
   activePositions: Position[];
   dataSource?: string;
   binanceError?: string | null;
+  userData?: UserData;
 }
