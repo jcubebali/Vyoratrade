@@ -32,7 +32,7 @@ import LoginView from "./components/LoginView";
 
 import { auth, db } from "./firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { collection, onSnapshot, query, orderBy, limit, doc, where } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit, doc, where, updateDoc } from "firebase/firestore";
 
 const DEFAULT_STATE: CompleteState = {
   signals: {},
@@ -165,9 +165,10 @@ export default function App() {
   };
 
   const handleSaveSettings = async (updates: any) => {
+    // Save API keys securely to VPS
     if (updates.binanceApiKey && updates.binanceSecret && user) {
       try {
-        const res = await fetch('http://152.42.248.130:8888/api/save-keys', {
+        await fetch('http://152.42.248.130:8888/api/save-keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -177,23 +178,29 @@ export default function App() {
             apiSecret: updates.binanceSecret
           })
         });
-        if (res.ok) console.log('API keys saved securely to VPS');
       } catch (err) {
         console.error('Failed to save API keys:', err);
+      }
+    }
+
+    // Save other settings to Firestore
+    if (user) {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const firestoreUpdates: any = {};
+        if (updates.telegramBotId !== undefined) firestoreUpdates.telegramBotId = updates.telegramBotId;
+        if (updates.telegramChatId !== undefined) firestoreUpdates.telegramChatId = updates.telegramChatId;
+        if (Object.keys(firestoreUpdates).length > 0) {
+          await updateDoc(userRef, firestoreUpdates);
+        }
+      } catch (err) {
+        console.error('Failed to save settings to Firestore:', err);
       }
     }
   };
 
   const handleUpgradePlan = async (plan: string) => {
-    try {
-      await fetch("/api/billing/upgrade", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan })
-      });
-    } catch (err) {
-      console.error(err);
-    }
+    alert('Untuk upgrade plan, hubungi admin via WhatsApp: +62881037763388');
   };
 
   const isPro = ["pro", "elite"].includes(state.subscription?.plan?.toLowerCase() || "");
