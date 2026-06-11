@@ -23,15 +23,11 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
 
   // Calculate Net Asset Value (NAV) dynamically
   const cashVal = balance?.cashUsdt || 0;
-  const cryptoVal = assets
-    .filter(a => a.symbol !== "USDT")
-    .reduce((sum, a) => sum + (a.amount * a.price), 0);
-  const totalNAV = cashVal + cryptoVal;
+  const totalNAV = cashVal;
 
-  const closedTrades = trades.filter(t => t.pnl !== undefined);
-  const totalPnL = closedTrades.reduce((sum, t) => sum + (t.pnl || 0), 0);
-  const winningTrades = closedTrades.filter(t => (t.pnl || 0) > 0).length;
-  const winRate = closedTrades.length > 0 ? (winningTrades / closedTrades.length) * 100 : 0;
+  const totalPnL = (state as any).userData?.totalPnl || 0;
+  const winRate = (state as any).userData?.winRate || 0;
+  const openPos = (state as any).userData?.openPosition;
 
   return (
     <div className="space-y-6">
@@ -105,9 +101,9 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
             <Activity className="h-4.5 w-4.5 text-indigo-400" />
           </div>
           <div className="flex items-center space-x-2.5">
-            <span className={`w-3 h-3 rounded-full ${botConfig.isActive ? "bg-emerald-400 animate-pulse shadow-md shadow-emerald-400" : "bg-slate-700"}`} />
+            <span className={`w-3 h-3 rounded-full ${(state as any).userData?.botStatus === "RUNNING" ? "bg-emerald-400 animate-pulse shadow-md shadow-emerald-400" : "bg-slate-700"}`} />
             <h3 className="text-xl font-bold text-slate-100 uppercase font-mono">
-              {botConfig.isActive ? "ACTIVE" : "STANDBY"}
+              {(state as any).userData?.botStatus === "RUNNING" ? "ACTIVE" : "STANDBY"}
             </h3>
           </div>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
@@ -128,7 +124,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
             {totalPnL >= 0 ? "+" : ""}${totalPnL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h3>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
-            From <b className="text-slate-200">{closedTrades.length}</b> completed trades
+            From <b className="text-slate-200">{(state as any).userData?.totalTrades || 0}</b> completed trades
           </p>
           <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/5 rounded-full blur-2xl" />
         </div>
@@ -145,11 +141,65 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
             {winRate.toFixed(1)}%
           </h3>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
-            <b className="text-emerald-400">{winningTrades}</b> Winning / <b className="text-rose-400">{closedTrades.length - winningTrades}</b> Losing
+            {(() => {
+              const totalTrades = (state as any).userData?.totalTrades || 0;
+              const wins = Math.round(totalTrades * winRate / 100);
+              return (
+                <>
+                  <b className="text-emerald-400">{wins}</b> Winning / <b className="text-rose-400">{totalTrades - wins}</b> Losing
+                </>
+              );
+            })()}
           </p>
           <div className="absolute top-0 right-0 h-16 w-16 bg-violet-500/5 rounded-full blur-2xl" />
         </div>
       </div>
+
+      {/* Open Position Display from Firestore */}
+      {openPos && (openPos.status === 'OPEN' || openPos.status === 'open') && (
+        <div className="p-5 rounded-2xl bg-slate-900 border border-emerald-500/20 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-emerald-500" />
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-emerald-500/10 text-emerald-400 text-[10px] font-sans font-bold uppercase tracking-wider rounded-md px-2 py-0.5 select-none animate-pulse">
+                  ACTIVE POSITION
+                </span>
+                <span className="font-sans font-extrabold text-sm text-slate-100">{openPos.symbol}</span>
+                <span className="text-slate-500 font-mono text-xs">{(openPos.type || "LONG").toUpperCase()} {(openPos.leverage || 10)}X</span>
+              </div>
+              <p className="text-xs text-slate-400 font-medium">
+                Live trading contract synced from secure cloud node.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:flex items-center gap-6 md:gap-8 font-mono text-xs text-left">
+              <div>
+                <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold mb-0.5">Entry Price</span>
+                <span className="text-slate-200 font-extrabold">${(openPos.entryPrice ?? openPos.entry_price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold mb-0.5">Current Price</span>
+                <span className="text-slate-200 font-extrabold">${(openPos.currentPrice ?? openPos.currPrice ?? openPos.current_price ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold mb-0.5 relative whitespace-nowrap">Unrealized PnL</span>
+                <span className={`font-extrabold ${(openPos.pnl ?? 0) >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                  {(openPos.pnl ?? 0) >= 0 ? "+" : ""}${(openPos.pnl ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ({ (openPos.pnlPercent ?? 0) >= 0 ? "+" : ""}{(openPos.pnlPercent ?? 0).toFixed(2)}%)
+                </span>
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <span className="text-[10px] text-slate-500 block uppercase font-sans font-bold mb-0.5">Safety Bounds</span>
+                <div className="text-[11px] text-slate-400 flex flex-wrap gap-x-2 gap-y-0.5">
+                  <span title="Trailing Stop Loss">TSL: <b className="text-slate-200">${(openPos.trailSl ?? openPos.trail_sl ?? openPos.trailingStop ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></span>
+                  <span title="Take Profit">TP: <b className="text-slate-200">${(openPos.hardTp ?? openPos.hard_tp ?? openPos.takeProfit ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></span>
+                  <span title="Stop Loss">SL: <b className="text-slate-200">${(openPos.hardSl ?? openPos.hard_sl ?? openPos.stopLoss ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bot master fast toggle switch & warnings */}
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
