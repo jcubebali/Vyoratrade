@@ -16,11 +16,20 @@ service cloud.firestore {
 
     function isValidTrade(data) {
       return data.symbol is string && data.symbol.size() <= 16
-        && data.type is string && (data.type == 'BUY' || data.type == 'SELL')
+        && data.type is string && (data.type == 'BUY' || data.type == 'SELL' || data.type == 'WITHDRAW')
         && data.price is number && data.price > 0
         && data.amount is number && data.amount > 0
         && data.keys().hasAll(['symbol', 'type', 'price', 'amount'])
-        && data.keys().size() <= 7;
+        && data.keys().size() <= 9;
+    }
+
+    function isValidOpenTrade(data) {
+      return data.symbol is string && data.symbol.size() <= 16
+        && data.entryPrice is number && data.entryPrice > 0
+        && data.amount is number && data.amount > 0
+        && (!('margin' in data) || data.margin is number)
+        && (!('leverage' in data) || data.leverage is number)
+        && data.keys().hasAll(['symbol', 'entryPrice', 'amount']);
     }
 
     function isValidUserConfig(data) {
@@ -40,6 +49,10 @@ service cloud.firestore {
     match /trades/{tradeId} {
       allow read: if isSignedIn();
       allow create: if isValidId(tradeId) && isValidTrade(request.resource.data);
+    }
+
+    match /open_trades/{openTradeId} {
+      allow read, write: if isSignedIn();
     }
   }
 }

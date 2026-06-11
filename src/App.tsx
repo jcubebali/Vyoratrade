@@ -40,7 +40,7 @@ const DEFAULT_STATE: CompleteState = {
     SOLUSDT: { symbol: "SOLUSDT", price: 242.80, change24h: 8.75, rsi: 68.9, macd: 3.4, trend: "BULLISH", verdict: "BUY", confidence: "HIGH", aiAnalysis: "" },
     BNBUSDT: { symbol: "BNBUSDT", price: 618.40, change24h: 0.25, rsi: 52.1, macd: 0.8, trend: "NEUTRAL", verdict: "HOLD", confidence: "LOW", aiAnalysis: "" }
   },
-  botConfig: { isActive: false, strategy: "EMA_CROSS + RSI", symbol: "SOLUSDT", stopLoss: 2.5, takeProfit: 5.0, trailingStop: 0.5, capital: 1500, leverage: 10 },
+  botConfig: { isActive: false, strategy: "EMA_CROSS + RSI", symbol: "SOLUSDT", stopLoss: 2.5, takeProfit: 5.0, trailingStop: 0.5, capital: 1500, leverage: 10, maxRam: 512, slTpMode: "PRICE" },
   trades: [],
   assets: [
     { symbol: "USDT", amount: 12450.75, price: 1.0, change24h: 0.0 },

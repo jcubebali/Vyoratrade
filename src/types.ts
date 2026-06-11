@@ -40,6 +40,8 @@ export interface BotConfig {
   trailingStop: number;
   capital: number;
   leverage: number;
+  maxRam: number;
+  slTpMode?: "PRICE" | "ROE";
 }
 
 export interface VyoraSettings {
@@ -56,6 +58,19 @@ export interface Subscription {
   isActive: boolean;
 }
 
+export interface Position {
+  id: string;
+  symbol: string;
+  type: "LONG" | "SHORT";
+  entryPrice: number;
+  currPrice: number;
+  amount: number;
+  leverage: number;
+  margin: number;
+  pnl: number;
+  pnlPercent: number;
+}
+
 export interface CompleteState {
   signals: Record<string, MarketSignal>;
   botConfig: BotConfig;
@@ -66,7 +81,7 @@ export interface CompleteState {
   balance: {
     cashUsdt: number;
   };
-  activePositions: any[];
+  activePositions: Position[];
   dataSource?: string;
   binanceError?: string | null;
 }

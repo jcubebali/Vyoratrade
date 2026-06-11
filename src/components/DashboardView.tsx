@@ -10,7 +10,7 @@ import {
   Clock, 
   ShieldCheck 
 } from "lucide-react";
-import { CompleteState } from "../types";
+import { CompleteState, Position } from "../types";
 
 interface DashboardViewProps {
   state: CompleteState;
@@ -217,7 +217,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50 text-slate-350">
-                  {activePositions.map((p: any) => {
+                  {activePositions.map((p: Position) => {
                     const isProfit = p.pnl >= 0;
                     return (
                       <tr key={p.id} className="hover:bg-slate-950/20 transition-all">

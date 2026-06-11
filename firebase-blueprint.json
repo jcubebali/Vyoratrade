@@ -13,12 +13,30 @@
         "timestamp": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
       },
       "required": ["symbol", "type", "price", "amount"]
+    },
+    "open_trade": {
+      "title": "Open Trade",
+      "description": "An active open trading position",
+      "type": "object",
+      "properties": {
+        "symbol": { "type": "string", "description": "The crypto symbol" },
+        "entryPrice": { "type": "number", "description": "Price at entry" },
+        "amount": { "type": "number", "description": "Quantity" },
+        "margin": { "type": "number", "description": "Margin used" },
+        "leverage": { "type": "number", "description": "Leverage factor" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Timestamp of entry" }
+      },
+      "required": ["symbol", "entryPrice", "amount"]
     }
   },
   "firestore": {
     "/trades/{tradeId}": {
       "schema": "trade",
       "description": "Collection of all executed and synchronized trades"
+    },
+    "/open_trades/{openTradeId}": {
+      "schema": "open_trade",
+      "description": "Collection of current active open trades/positions"
     }
   }
 }
