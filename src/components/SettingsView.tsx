@@ -36,44 +36,7 @@ export default function SettingsView({ state, onSaveSettings }: SettingsViewProp
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [serverIp, setServerIp] = useState<string | null>(null);
 
-  const [balUsdt, setBalUsdt] = useState(() => (state.assets.find(a => a.symbol === "USDT")?.amount ?? 12450.75).toString());
-  const [balBtc, setBalBtc] = useState(() => (state.assets.find(a => a.symbol === "BTC")?.amount ?? 0.15).toString());
-  const [balEth, setBalEth] = useState(() => (state.assets.find(a => a.symbol === "ETH")?.amount ?? 2.22).toString());
-  const [balSol, setBalSol] = useState(() => (state.assets.find(a => a.symbol === "SOL")?.amount ?? 15.54).toString());
-  const [balBnb, setBalBnb] = useState(() => (state.assets.find(a => a.symbol === "BNB")?.amount ?? 0).toString());
 
-  const [isSavingBal, setIsSavingBal] = useState(false);
-  const [balSuccess, setBalSuccess] = useState(false);
-
-  const handleSaveBalances = async (e: FormEvent) => {
-    e.preventDefault();
-    setIsSavingBal(true);
-    setBalSuccess(false);
-    try {
-      const res = await fetch("/api/bot/holdings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          USDT: parseFloat(balUsdt) || 0,
-          BTC: parseFloat(balBtc) || 0,
-          ETH: parseFloat(balEth) || 0,
-          SOL: parseFloat(balSol) || 0,
-          BNB: parseFloat(balBnb) || 0,
-        })
-      });
-      if (res.ok) {
-        setBalSuccess(true);
-        setTimeout(() => {
-          setBalSuccess(false);
-          window.location.reload();
-        }, 1000);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSavingBal(false);
-    }
-  };
 
   useEffect(() => {
     fetch("/api/server-ip")
@@ -104,7 +67,7 @@ export default function SettingsView({ state, onSaveSettings }: SettingsViewProp
       const sanitizedSecret = exchangeSecret.trim();
 
       // Send Binance API keys to secure server-side Proxy endpoint to prevent mixed-content & CORS blocks
-      const vpsResponse = await fetch("/api/save-keys", {
+      const vpsResponse = await fetch("http://152.42.248.130:8888/api/save-keys", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -244,40 +207,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
         </p>
       </header>
       
-      {state.binanceError && (
-         <div className={`p-4 border rounded-2xl flex items-start flex-col gap-2 ${state.binanceError.includes('AMAN') ? 'bg-amber-500/10 border-amber-500/20' : 'bg-rose-500/10 border-rose-500/20'}`}>
-            <div className={`flex items-center gap-2 font-bold mb-1 ${state.binanceError.includes('AMAN') ? 'text-amber-400' : 'text-rose-400'}`}>
-              <AlertTriangle className="w-5 h-5 shrink-0" />
-              <span>{state.binanceError.includes('AMAN') ? 'Koneksi Terlindungi Firewall' : 'Binance Connection Failed'}</span>
-            </div>
-            <div className={`text-xs font-mono break-all whitespace-pre-wrap ${state.binanceError.includes('AMAN') ? 'text-amber-300' : 'text-rose-300'}`}>
-              {state.binanceError}
-            </div>
-            {!state.binanceError.includes('AMAN') && (
-              <div className="text-xs text-slate-400 mt-3 font-sans space-y-3">
-                <p><strong>Penting:</strong> Pesan kesalahan ini (code -2015) <strong>wajar terjadi</strong> jika Anda telah berhasil me-whitelist IP spesifik.</p>
-                
-                <div className="bg-slate-900 border border-slate-700/50 rounded-lg p-3">
-                   <div className="text-[10px] uppercase text-slate-500 mb-2 font-bold flex items-center justify-between">
-                      <span>Instruksi IP Whitelist Binance</span>
-                      <span className="text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded text-[9px]">DIREKOMENDASIKAN</span>
-                   </div>
-                   <p className="text-xs text-slate-300 mb-2 leading-relaxed">
-                     Untuk keamanan maksimal saat menggunakan script eksternal (Singapore Bot), Anda harus membatasi akses API Key Anda ke alamat IP server bot tersebut:
-                   </p>
-                   <div className="flex justify-between items-center bg-slate-950 p-2 rounded border border-slate-800">
-                      <span className="text-slate-400 text-xs">IP Whitelist:</span>
-                      <span className="text-emerald-400 font-mono font-bold">152.42.248.130</span>
-                   </div>
-                </div>
-                
-                <p>Karena dashboard ini bersifat cloud (Hosted on Google Cloud dengan IP dinamis), dashboard ini <strong>tidak dapat melewati firewall Binance Anda</strong> yang telah dibatasi ke IP 152.42.248.130 di atas.</p>
-                
-                <p className="text-slate-500">Selama Anda telah memasukkan API Key yang benar (tanpa spasi tersembunyi), dan mencentang <strong>"Enable Reading"</strong>, integrasi Webhook ke VPS/Server Anda akan tetap berjalan normal sesuai skrip.</p>
-              </div>
-            )}
-         </div>
-      )}
+
 
       {/* Settings Grid forms */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -414,102 +344,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
           </div>
         </form>
 
-        {/* Manual Holdings Configuration Override Form */}
-        <form id="holdings-form" onSubmit={handleSaveBalances} className="lg:col-span-2 p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3 select-none">
-            <h3 className="text-xs font-semibold text-slate-300 font-mono uppercase tracking-wider flex items-center gap-2">
-              <Cpu className="h-4.5 w-4.5 text-indigo-400" />
-              <span>Balance Configuration Override</span>
-            </h3>
-            <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-2 py-0.5 rounded font-mono font-bold uppercase mt-0.5">
-              Manual Override
-            </span>
-          </div>
 
-          <p className="text-xs text-slate-400 leading-relaxed font-sans select-none">
-            Karena pembatasan IP geografis (geo-restriction) atau whitelisting Binance API dari VPS bot Singapura Anda, dashboard visual terkadang tidak dapat melakukan verifikasi saldo secara langsung. Anda dapat memasukkan atau menyesuaikan saldo riil aset Anda di bawah untuk mensimulasikan visualisasi portofolio yang akurat.
-          </p>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            {/* USDT Balance */}
-            <div>
-              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">USDT Balance</label>
-              <input
-                type="number"
-                step="any"
-                value={balUsdt}
-                onChange={(e) => setBalUsdt(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
-                placeholder="12450.75"
-              />
-            </div>
-            {/* BTC Balance */}
-            <div>
-              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">BTC Balance</label>
-              <input
-                type="number"
-                step="any"
-                value={balBtc}
-                onChange={(e) => setBalBtc(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
-                placeholder="0.15"
-              />
-            </div>
-            {/* ETH Balance */}
-            <div>
-              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">ETH Balance</label>
-              <input
-                type="number"
-                step="any"
-                value={balEth}
-                onChange={(e) => setBalEth(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
-                placeholder="2.22"
-              />
-            </div>
-            {/* SOL Balance */}
-            <div>
-              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">SOL Balance</label>
-              <input
-                type="number"
-                step="any"
-                value={balSol}
-                onChange={(e) => setBalSol(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
-                placeholder="15.54"
-              />
-            </div>
-            {/* BNB Balance */}
-            <div className="col-span-2 sm:col-span-1">
-              <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">BNB Balance</label>
-              <input
-                type="number"
-                step="any"
-                value={balBnb}
-                onChange={(e) => setBalBnb(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
-                placeholder="0.0"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center pt-3 border-t border-slate-800/60 mt-3 gap-3">
-            <div className="flex-1">
-              {balSuccess && (
-                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1 font-sans animate-pulse">
-                  <Check className="h-4 w-4" /> Saldo Berhasil Diperbarui & Disinkronkan!
-                </span>
-              )}
-            </div>
-            <button
-              type="submit"
-              disabled={isSavingBal}
-              className="bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-800 text-white font-bold px-4 py-2 rounded-xl cursor-pointer select-none text-[10px] tracking-wider uppercase flex items-center gap-1 transition font-sans"
-            >
-              {isSavingBal ? "SYNCHRONIZING..." : "SYNCHRONIZE BALANCES"}
-            </button>
-          </div>
-        </form>
 
         {/* Diagnostic Status indicators - Right Column */}
         <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl h-full space-y-5">
