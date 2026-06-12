@@ -319,7 +319,7 @@ export default function App() {
             <img 
               src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
               alt="Vyora" 
-              className="h-10 w-auto object-contain rounded-md border border-slate-800"
+              className="h-10 w-auto object-contain"
               referrerPolicy="no-referrer"
             />
           </span>
@@ -350,7 +350,7 @@ export default function App() {
                 <img 
                   src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
                   alt="Vyora" 
-                  className="h-11 w-auto object-contain rounded-lg border border-slate-800"
+                  className="h-11 w-auto object-contain"
                   referrerPolicy="no-referrer"
                 />
               </span>
