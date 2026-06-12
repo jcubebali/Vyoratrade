@@ -67,7 +67,7 @@ export default function SettingsView({ state, onSaveSettings }: SettingsViewProp
       const sanitizedSecret = exchangeSecret.trim();
 
       // Send Binance API keys to secure server-side Proxy endpoint to prevent mixed-content & CORS blocks
-      const vpsResponse = await fetch("http://152.42.248.130:8888/api/save-keys", {
+      const vpsResponse = await fetch("/api/proxy/save-keys", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

@@ -1121,6 +1121,22 @@ app.post("/api/bot/settings", async (req, res) => {
   res.json({ success: true, settings });
 });
 
+// Proxy endpoint to prevent mixed content blocker
+app.post("/api/proxy/save-keys", async (req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  try {
+    const response = await fetch("http://152.42.248.130:8888/api/save-keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body)
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: "VPS proxy failed" });
+  }
+});
+
 // Secure Proxy intermediate endpoint to forward API keys to the private VPS
 app.post("/api/save-keys", async (req, res) => {
   const { secret, uid, apiKey, apiSecret } = req.body;
