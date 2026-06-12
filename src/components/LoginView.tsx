@@ -3,7 +3,11 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithP
 import { auth } from "../firebase";
 import { Sparkles, Key, Mail, Lock, Loader2, AlertCircle, ArrowRight } from "lucide-react";
 
-export default function LoginView() {
+interface LoginViewProps {
+  onBackToHome?: () => void;
+}
+
+export default function LoginView({ onBackToHome }: LoginViewProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -246,6 +250,18 @@ export default function LoginView() {
           </div>
 
         </div>
+
+        {onBackToHome && (
+          <div className="mt-4 text-center">
+            <button 
+              type="button"
+              onClick={onBackToHome}
+              className="text-[10px] uppercase tracking-widest font-mono text-slate-500 hover:text-emerald-400 transition"
+            >
+              &larr; Kembali ke Beranda
+            </button>
+          </div>
+        )}
 
         {/* Quiet premium footer details */}
         <div className="mt-6 text-center text-[10px] text-slate-600 font-mono tracking-wider uppercase">

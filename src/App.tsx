@@ -29,6 +29,7 @@ import PortfolioView from "./components/PortfolioView";
 import BillingView from "./components/BillingView";
 import SettingsView from "./components/SettingsView";
 import LoginView from "./components/LoginView";
+import LandingPage from "./components/LandingPage";
 
 import { auth, db } from "./firebase";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
@@ -51,6 +52,7 @@ export default function App() {
   const [state, setState] = useState<CompleteState>(DEFAULT_STATE);
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [showLoginScreen, setShowLoginScreen] = useState<boolean>(false);
 
   useEffect(() => {
     let unsubUserDoc: (() => void) | undefined;
@@ -61,6 +63,7 @@ export default function App() {
       setAuthChecking(false);
 
       if (user) {
+        setShowLoginScreen(false);
         // Listen to user document
         const userRef = doc(db, "users", user.uid);
         unsubUserDoc = onSnapshot(userRef, (snap) => {
@@ -167,7 +170,15 @@ export default function App() {
   }
   
   if (!user) {
-    return <LoginView />;
+    if (showLoginScreen) {
+      return <LoginView onBackToHome={() => setShowLoginScreen(false)} />;
+    }
+    return (
+      <LandingPage 
+        onLogin={() => setShowLoginScreen(true)} 
+        onRegister={() => setShowLoginScreen(true)} 
+      />
+    );
   }
 
   const handleSignOut = () => {
