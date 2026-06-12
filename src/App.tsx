@@ -70,6 +70,19 @@ export default function App() {
               ...prev,
               balance: { cashUsdt: data.totalUsdt || 0 },
               subscription: { plan: data.plan || "trial", isActive: true },
+              botConfig: {
+                ...prev.botConfig,
+                isActive: data.botStatus === "RUNNING",
+                strategy: data.strategy || "EMA_CROSS + RSI",
+                symbol: data.symbol || "SOLUSDT",
+                stopLoss: data.stopLoss !== undefined ? data.stopLoss : 2.5,
+                takeProfit: data.takeProfit !== undefined ? data.takeProfit : 5.0,
+                trailingStop: data.trailingStop !== undefined ? data.trailingStop : 0.5,
+                capital: data.capital !== undefined ? data.capital : 1500,
+                leverage: data.leverage !== undefined ? data.leverage : 10,
+                maxRam: data.maxRam !== undefined ? data.maxRam : 512,
+                slTpMode: data.slTpMode || "PRICE"
+              },
               userData: {
                 totalPnl: data.totalPnl || 0,
                 winRate: data.winRate || 0,
@@ -123,6 +136,32 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchSignalsData = async () => {
+      try {
+        const res = await fetch("/api/state");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.signals) {
+            setState(prev => ({
+              ...prev,
+              signals: data.signals,
+              dataSource: data.dataSource || (prev as any).dataSource
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch state signals:", err);
+      }
+    };
+
+    fetchSignalsData();
+    const timer = setInterval(fetchSignalsData, 5000);
+    return () => clearInterval(timer);
+  }, [user]);
+
   if (authChecking) {
     return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-500 font-mono">Initializing System Auth...</div>;
   }
@@ -137,38 +176,49 @@ export default function App() {
 
 
   const handleToggleBot = async () => {
+    if (!user) return;
     try {
-      await fetch("/api/bot/toggle", { method: "POST" });
+      const userRef = doc(db, "users", user.uid);
+      const currentStatus = state.userData?.botStatus || "STOPPED";
+      const newStatus = currentStatus === "RUNNING" ? "STOPPED" : "RUNNING";
+      await updateDoc(userRef, {
+        botStatus: newStatus
+      });
     } catch (err) {
-      console.error(err);
-      // Fallback state toggle when running in isolated preview environments
-      setState(prev => ({
-        ...prev,
-        botConfig: {
-          ...prev.botConfig,
-          isActive: !prev.botConfig.isActive
-        }
-      }));
+      console.error('Failed to toggle bot in Firestore:', err);
     }
   };
 
   const handleConfigureBot = async (updates: any) => {
+    if (!user) return;
     try {
-      await fetch("/api/bot/config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates)
-      });
+      const userRef = doc(db, "users", user.uid);
+      const firestoreUpdates: any = {};
+      
+      if (updates.strategy !== undefined) firestoreUpdates.strategy = updates.strategy;
+      if (updates.symbol !== undefined) firestoreUpdates.symbol = updates.symbol;
+      if (updates.stopLoss !== undefined) firestoreUpdates.stopLoss = parseFloat(updates.stopLoss);
+      if (updates.takeProfit !== undefined) firestoreUpdates.takeProfit = parseFloat(updates.takeProfit);
+      if (updates.trailingStop !== undefined) firestoreUpdates.trailingStop = parseFloat(updates.trailingStop);
+      if (updates.capital !== undefined) firestoreUpdates.capital = parseFloat(updates.capital);
+      if (updates.leverage !== undefined) firestoreUpdates.leverage = parseInt(updates.leverage);
+      if (updates.maxRam !== undefined) firestoreUpdates.maxRam = parseInt(updates.maxRam);
+      if (updates.slTpMode !== undefined) firestoreUpdates.slTpMode = updates.slTpMode;
+
+      if (Object.keys(firestoreUpdates).length > 0) {
+        await updateDoc(userRef, firestoreUpdates);
+        console.log("Successfully updated bot configuration in Firestore:", firestoreUpdates);
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to update bot config in Firestore:', err);
     }
   };
 
   const handleSaveSettings = async (updates: any) => {
-    // Save API keys securely to VPS
+    // Save API keys securely to VPS via secure Express Server local proxy to bypass Mixed Content SSL blocker
     if (updates.binanceApiKey && updates.binanceSecret && user) {
       try {
-        await fetch('http://152.42.248.130:8888/api/save-keys', {
+        await fetch('/api/proxy/save-keys', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -179,7 +229,7 @@ export default function App() {
           })
         });
       } catch (err) {
-        console.error('Failed to save API keys:', err);
+        console.error('Failed to save API keys via proxy:', err);
       }
     }
 

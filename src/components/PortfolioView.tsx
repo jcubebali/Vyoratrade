@@ -14,6 +14,8 @@ import {
   ArrowRight
 } from "lucide-react";
 import { CompleteState } from "../types";
+import { db, auth } from "../firebase";
+import { doc, updateDoc, addDoc, collection } from "firebase/firestore";
 
 interface PortfolioViewProps {
   state: CompleteState;
@@ -143,28 +145,38 @@ export default function PortfolioView({ state }: PortfolioViewProps) {
       const mockTx = "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
       setTxHash(mockTx);
 
-      // Submit API request to deduct balance & record ledger log
-      const res = await fetch("/api/bot/withdraw-metamask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      // Save directly to Firestore since API endpoint is removed
+      const user = auth.currentUser;
+      if (user) {
+        // Record withdrawal as a completed trade in Firestore ledger list
+        await addDoc(collection(db, "trades"), {
+          uid: user.uid,
+          symbol: "USDT",
+          type: "WITHDRAW",
+          price: 1.0,
           amount: amountNum,
+          pnl: 0,
+          timestamp: new Date().toISOString(),
+          status: "COMPLETED",
           address: account,
           txHash: mockTx
-        })
-      });
+        });
 
-      if (res.ok) {
+        // Deduct balance from user document
+        const userRef = doc(db, "users", user.uid);
+        const newBalance = Math.max(0, parseFloat((cashUsdt - amountNum).toFixed(2)));
+        await updateDoc(userRef, {
+          totalUsdt: newBalance
+        });
+
         setWithdrawSuccess(true);
         setWithdrawAmount("");
         setWithdrawError(null);
         setTimeout(() => {
           setWithdrawSuccess(false);
-          window.location.reload();
         }, 3000);
       } else {
-        const errorData = await res.json();
-        setWithdrawError(errorData.error || "Gagal melakukan pemotongan saldo di database.");
+        throw new Error("Sesi pengguna tidak valid.");
       }
     } catch (err: any) {
       console.error(err);
