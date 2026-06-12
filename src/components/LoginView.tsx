@@ -84,10 +84,13 @@ export default function LoginView({ onBackToHome }: LoginViewProps) {
           
           {/* Header Area */}
           <div className="flex flex-col items-center mb-6">
-            <span className="text-emerald-400 font-extrabold text-3xl font-mono tracking-wider flex items-center gap-1.5">
-              VYORA
-            </span>
-            <div className="w-12 h-0.5 bg-emerald-500/30 mt-2 rounded-full" />
+            <img 
+              src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+              alt="Vyora Logo" 
+              className="h-24 w-auto object-contain rounded-2xl border border-slate-800 shadow-2xl shadow-emerald-500/10"
+              referrerPolicy="no-referrer"
+            />
+            <div className="w-12 h-0.5 bg-emerald-500/30 mt-4 rounded-full" />
           </div>
 
           {!isLogin && (

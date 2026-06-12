@@ -315,8 +315,13 @@ export default function App() {
       {/* 1. Mobile Top Bar Header Navigation */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 border-b border-slate-805 border-slate-800 z-40 px-4 flex items-center justify-between select-none">
         <div className="flex items-center space-x-2">
-          <span className="text-emerald-400 font-extrabold text-lg flex items-center gap-1 font-mono">
-            VYORA <Sparkles className="h-4.5 w-4.5 fill-current text-emerald-400" />
+          <span className="flex items-center font-mono">
+            <img 
+              src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+              alt="Vyora" 
+              className="h-10 w-auto object-contain rounded-md border border-slate-800"
+              referrerPolicy="no-referrer"
+            />
           </span>
           <span className="text-[10px] font-mono leading-none bg-emerald-500/10 text-emerald-400 py-1 px-2 rounded-full font-bold">
             v3.5 PRIME
@@ -341,8 +346,13 @@ export default function App() {
           {/* Header Branding */}
           <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-900/60 font-mono">
             <div className="flex items-center space-x-2">
-              <span className="text-emerald-400 font-extrabold text-xl tracking-tight flex items-center gap-1 font-mono">
-                VYORA <Sparkles className="h-5 w-5 fill-current text-emerald-400 animate-pulse" />
+              <span className="flex items-center font-mono">
+                <img 
+                  src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+                  alt="Vyora" 
+                  className="h-11 w-auto object-contain rounded-lg border border-slate-800"
+                  referrerPolicy="no-referrer"
+                />
               </span>
               <span className="text-[9px] font-mono bg-indigo-500/10 text-indigo-300 py-0.5 px-1.5 rounded-full font-bold">
                 PRO-SYSTEM

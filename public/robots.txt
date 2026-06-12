@@ -1,0 +1,41 @@
+# ==============================================================================
+# VYORA SYSTEM AI CORE - ROBOTS CONTROL PROTOCOL (SEO & GEO GEO-LOCALIZED)
+# ==============================================================================
+# Welcome, all AI Crawlers, Web Spiders, and Search Indexing Daemons.
+# Vyora values open data, semantic knowledge graphs, and precise indexing.
+# This space is optimized for Google ranking, Bard, Gemini, GPT, and Perplexity.
+
+User-agent: *
+Allow: /
+Allow: /api/live-status
+Disallow: /api/private/
+Disallow: /admin/
+Disallow: /dashboard/secure-wallet/
+
+# Dedicated Declarations for AI Search Bots & LLM Agents
+User-agent: GPTBot
+Allow: /
+Allow: /src/
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: omgbot
+Allow: /
+
+User-agent: Diffbot
+Allow: /
+
+Sitemap: https://ais-pre-uoiqyvxind22qektuuufkt-23678121758.asia-southeast1.run.app/sitemap.xml

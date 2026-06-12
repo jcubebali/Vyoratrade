@@ -233,11 +233,16 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
         scrolled ? "bg-slate-950/80 backdrop-blur-xl border-b border-slate-900 py-3" : "bg-transparent py-5"
       }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-emerald-400 font-black text-2xl tracking-wider font-mono flex items-center gap-1.5 hover:opacity-90 cursor-default">
-              VYORA <Sparkles className="h-5 w-5 fill-current text-emerald-400" />
+          <div className="flex items-center gap-4">
+            <span className="flex items-center hover:opacity-90 cursor-default">
+              <img 
+                src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+                alt="Vyora" 
+                className="h-14 w-auto object-contain rounded-xl border border-slate-800 shadow-lg shadow-black/40"
+                referrerPolicy="no-referrer"
+              />
             </span>
-            <div className="h-4 w-[1px] bg-slate-800" />
+            <div className="h-6 w-[1px] bg-slate-800" />
             <span className="text-[10px] font-mono leading-none bg-emerald-500/10 text-emerald-400 py-1 px-2.5 rounded-full font-bold uppercase tracking-wider">
               QUANT CORE
             </span>
@@ -723,7 +728,13 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <span className="text-emerald-500 font-extrabold text-lg tracking-wider">VYORA BLOCK SYSTEM</span>
+              <img 
+                src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+                alt="Vyora" 
+                className="h-10 w-auto object-contain rounded-lg border border-slate-900"
+                referrerPolicy="no-referrer"
+              />
+              <span className="text-emerald-500 font-extrabold text-[11px] tracking-wider uppercase">BLOCK SYSTEM</span>
               <span className="bg-slate-900 text-slate-500 py-0.5 px-2 rounded text-[9px] font-bold">STABLE CODES</span>
             </div>
             
@@ -739,7 +750,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-900/60 pt-6">
-            <span>&copy; {new Date().getFullYear()} Vyora AI Inc. All quantum rights reserved. Dedicated to Singapore Ingress.</span>
+            <span>&copy; 2026 Vyora by J-CUBE  |  All Rights Reserved</span>
             <span className="flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-emerald-500" /> AES-256 API SSL SECURE BRIDGE</span>
           </div>
         </div>
