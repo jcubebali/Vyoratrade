@@ -436,126 +436,26 @@ app.get("/api/state", async (req, res) => {
   });
 });
 
-// Proxy route for Binance 24hr tickers with robust fallbacks
-app.get("/api/binance/tickers-24hr", async (req, res) => {
-  const pairs = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "DOGEUSDT", "ADAUSDT", "AVAXUSDT"];
-  
-  // Attempt 1: Fetch all symbols together from Binance API
+app.get("/api/binance/ticker-price", async (req, res) => {
+  const symbol = req.query.symbol || "BTCUSDT";
   try {
-    const symbolsParam = JSON.stringify(pairs);
-    const binanceRes = await fetchWithTimeout(`https://api.binance.com/api/v3/ticker/24hr?symbols=${encodeURIComponent(symbolsParam)}`, { timeout: 1500 });
-    if (binanceRes.ok) {
-      const data = await binanceRes.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return res.json(data);
-      }
-    }
+    const r = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
+    const data = await r.json();
+    res.json(data);
   } catch (err) {
-    console.warn("Binance 24hr tickers proxy symbols request failed, trying individual symbol queries:", err);
+    res.json({ price: "0" });
   }
-
-  // Attempt 2: Fetch individual symbols in parallel
-  try {
-    const promises = pairs.map(p =>
-      fetchWithTimeout(`https://api.binance.com/api/v3/ticker/24hr?symbol=${p}`, { timeout: 1200 })
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null)
-    );
-    const results = await Promise.all(promises);
-    const validResults = results.filter(Boolean);
-    if (validResults.length > 0) {
-      return res.json(validResults);
-    }
-  } catch (err) {
-    console.warn("Binance individual parallel requests failed, trying CryptoCompare fallback:", err);
-  }
-
-  // Attempt 3: CryptoCompare fallback
-  try {
-    const fsyms = "BTC,ETH,BNB,SOL,XRP,DOGE,ADA,AVAX";
-    const ccRes = await fetchWithTimeout(`https://min-api.cryptocompare.com/data/pricemultifull?fsyms=${fsyms}&tsyms=USD`, { timeout: 1500 });
-    if (ccRes.ok) {
-      const ccData = await ccRes.json();
-      if (ccData && ccData.RAW) {
-        const mappedList = pairs.map(p => {
-          const fsym = p.replace("USDT", "");
-          const raw = ccData.RAW[fsym]?.USD;
-          if (raw) {
-            return {
-              symbol: p,
-              lastPrice: String(raw.PRICE),
-              priceChangePercent: String(raw.CHANGEPCT24HOUR)
-            };
-          }
-          return null;
-        }).filter(Boolean);
-        if (mappedList.length > 0) {
-          return res.json(mappedList);
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("CryptoCompare fallback ticker failed, resorting to static cache simulation:", err);
-  }
-
-  // Fallback 4: Hardcoded polished data to guarantee operation
-  const simulatedTickers = [
-    { symbol: "BTCUSDT", lastPrice: String(signals.BTCUSDT?.price || 92450.00), priceChangePercent: String(signals.BTCUSDT?.change24h || 3.42) },
-    { symbol: "ETHUSDT", lastPrice: String(signals.ETHUSDT?.price || 3125.50), priceChangePercent: String(signals.ETHUSDT?.change24h || -1.15) },
-    { symbol: "BNBUSDT", lastPrice: String(signals.BNBUSDT?.price || 618.40), priceChangePercent: String(signals.BNBUSDT?.change24h || 0.25) },
-    { symbol: "SOLUSDT", lastPrice: String(signals.SOLUSDT?.price || 242.80), priceChangePercent: String(signals.SOLUSDT?.change24h || 8.75) },
-    { symbol: "XRPUSDT", lastPrice: "1.1512", priceChangePercent: "2.45" },
-    { symbol: "DOGEUSDT", lastPrice: "0.3848", priceChangePercent: "-1.20" },
-    { symbol: "ADAUSDT", lastPrice: "0.6251", priceChangePercent: "0.85" },
-    { symbol: "AVAXUSDT", lastPrice: "34.50", priceChangePercent: "4.12" }
-  ];
-  return res.json(simulatedTickers);
 });
 
-// Proxy route for simple BTCUSDT price lookup (Demo components)
-app.get("/api/binance/ticker-price", async (req, res) => {
-  const symbol = (req.query.symbol as string) || "BTCUSDT";
-  
-  // Attempt 1: Hit Binance
+app.get("/api/binance/tickers-24hr", async (req, res) => {
   try {
-    const binanceRes = await fetchWithTimeout(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`, { timeout: 1500 });
-    if (binanceRes.ok) {
-      const data = await binanceRes.json();
-      if (data && data.price) {
-        return res.json(data);
-      }
-    }
+    const symbols = ["BTCUSDT","ETHUSDT","BNBUSDT","SOLUSDT","XRPUSDT","DOGEUSDT","ADAUSDT","AVAXUSDT"];
+    const r = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbols=${JSON.stringify(symbols)}`);
+    const data = await r.json();
+    res.json(data);
   } catch (err) {
-    console.warn("Binance ticker-price proxy failed:", err);
+    res.json([]);
   }
-
-  // Attempt 2: signals cache lookup
-  if (symbol === "BTCUSDT" && signals.BTCUSDT) {
-    return res.json({ symbol: "BTCUSDT", price: String(signals.BTCUSDT.price) });
-  }
-
-  // Attempt 3: CryptoCompare
-  try {
-    const coinSym = symbol.replace("USDT", "");
-    const ccRes = await fetchWithTimeout(`https://min-api.cryptocompare.com/data/price?fsym=${coinSym}&tsyms=USD`, { timeout: 1500 });
-    if (ccRes.ok) {
-      const ccData = await ccRes.json();
-      if (ccData && ccData.USD) {
-        return res.json({ symbol, price: String(ccData.USD) });
-      }
-    }
-  } catch (err) {
-    console.warn("CryptoCompare single price fallback failed:", err);
-  }
-
-  // Fallback 4: static configuration
-  const fallbackPrices: Record<string, string> = {
-    BTCUSDT: "92450.00",
-    ETHUSDT: "3125.50",
-    SOLUSDT: "242.80",
-    BNBUSDT: "618.40"
-  };
-  return res.json({ symbol, price: fallbackPrices[symbol] || "1.00" });
 });
 
 // Proxy endpoint to prevent mixed content blocker
