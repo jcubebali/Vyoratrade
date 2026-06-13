@@ -440,7 +440,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
     };
     window.addEventListener("resize", handleResize);
 
-    const SPEED = 0.18; // Significantly faster draw movement
+    const SPEED = 0.045; // Halved again for slower draw movement
 
     const drawLines = () => {
       lctx.clearRect(0, 0, W, H);
