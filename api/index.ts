@@ -571,7 +571,8 @@ app.post("/api/webhook/trade", async (req, res) => {
 
 // Deep technical analysis utilizing real Gemini models with graceful fallbacks
 app.post("/api/gemini/analyze", async (req, res) => {
-  const { symbol } = req.body;
+  const { symbol, lang } = req.body;
+  const isId = lang === "id";
   const safeSymbol = symbol || "SOLUSDT";
   const coinData = signals[safeSymbol] || { price: 100, change24h: 0, rsi: 50, macd: 0, trend: "NEUTRAL" };
 
@@ -591,10 +592,11 @@ Generate a concise technical report strictly as valid JSON matching this schema:
   "symbol": "${safeSymbol}",
   "verdict": "BUY" | "SELL" | "HOLD",
   "confidence": "HIGH" | "MEDIUM" | "LOW",
-  "reasoning": "A highly precise 2-3 sentence technical analysis explaining support levels and momentum divergence.",
-  "riskFactor": "Active potential risk dangers such as derivative liquidation clusters or funding rate changes.",
-  "groundedPrediction": "A grounded 7-day projected target price range."
+  "reasoning": "A highly precise technical analysis explaining support levels and momentum divergence. Must be 2-3 sentences. If the requested language is 'id', this field MUST be written in professional Indonesian.",
+  "riskFactor": "Active potential risk dangers such as derivative liquidation clusters or funding rate changes. If the requested language is 'id', this field MUST be written in professional Indonesian.",
+  "groundedPrediction": "A grounded 7-day projected target price range. If the requested language is 'id', this field MUST be written in professional Indonesian."
 }
+IMPORTANT: Since 'id' is requested as ${isId ? "TRUE" : "FALSE"}, you MUST write the 'reasoning', 'riskFactor', and 'groundedPrediction' text values in ${isId ? "INDONESIAN" : "ENGLISH"} language.
 Return only the raw JSON. No markdown ticks formatting, no extra explanation.`;
 
     const response = await ai.models.generateContent({
@@ -620,22 +622,38 @@ Return only the raw JSON. No markdown ticks formatting, no extra explanation.`;
     console.error("Gemini Analyze Error; using technical convergence simulator:", err.message);
     
     // Mathematical simulation response when key isn't provided or fails
-    const targetPrices = {
+    const targetPricesId = {
+      BTCUSDT: { low: 91800, high: 93450, r: "Saluran kelanjutan yang kaku di atas $92.000. Konvergensi RSI menyiratkan dukungan pembeli yang persisten di sekitar ambang batas EMA50." },
+      ETHUSDT: { low: 3080, high: 3180, r: "Berjuang di bawah garis tren lokal. Lantai support bertahan kuat di sekitar kolam likuiditas struktural pada $3.050." },
+      SOLUSDT: { low: 238, high: 252, r: "Pola on-chain bullish yang sangat kuat. Volume relatif menunjukkan kompresi ritel kecil tetapi tren struktural keseluruhan tetap bertahan." },
+      BNBUSDT: { low: 610, high: 628, r: "Konsolidasi dalam bollinger-band standar. Volume rendah menunjukkan tekanan momentum lokal sebelum breakout segera." }
+    }[safeSymbol as "BTCUSDT" | "ETHUSDT" | "SOLUSDT" | "BNBUSDT"] || { low: 90, high: 110, r: "Token menunjukkan saluran sampingan lokal." };
+
+    const targetPricesEn = {
       BTCUSDT: { low: 91800, high: 93450, r: "Stiff continuation channels above $92,000. RSI convergence implies persistent buyer backup around EMA50 thresholds." },
       ETHUSDT: { low: 3080, high: 3180, r: "Struggling below localized trend-lines. Support floors hold firm around structural liquidity pools at $3,050." },
       SOLUSDT: { low: 238, high: 252, r: "Extremely strong bullish on-chain patterns. Relative volume demonstrates minor retail compression but overall structural trend sustains." },
       BNBUSDT: { low: 610, high: 628, r: "Consolidation within standard bollinger-bands. Low volume indicates localized momentum squeeze before immediate breakouts." }
     }[safeSymbol as "BTCUSDT" | "ETHUSDT" | "SOLUSDT" | "BNBUSDT"] || { low: 90, high: 110, r: "Token demonstrates localized sideways channels." };
 
+    const targetPrices = isId ? targetPricesId : targetPricesEn;
     const predictedVerdict = coinData.rsi > 60 ? "BUY" : coinData.rsi < 40 ? "SELL" : "HOLD";
+
+    const reason = targetPrices.r;
+    const risk = isId 
+      ? "Peningkatan margin terbuka berjangka dan lonjakan tingkat pendanaan yang dapat memicu lonjakan likuidasi lokal."
+      : "Increased futures open-interest and funding rate spikes that might induce localized liquidation spikes.";
+    const pred = isId
+      ? `Kisaran Target: $${targetPrices.low.toLocaleString('id-ID')} - $${targetPrices.high.toLocaleString('id-ID')} selama 48-72 jam ke depan.`
+      : `Target Range: $${targetPrices.low.toLocaleString('en-US')} - $${targetPrices.high.toLocaleString('en-US')} over the next 48-72h.`;
 
     return res.json({
       symbol: safeSymbol,
       verdict: predictedVerdict,
       confidence: coinData.rsi > 60 || coinData.rsi < 40 ? "HIGH" : "MEDIUM",
-      reasoning: targetPrices.r,
-      riskFactor: "Increased futures open-interest and funding rate spikes that might induce localized liquidation spikes.",
-      groundedPrediction: `Target Range: $${targetPrices.low.toLocaleString()} - $${targetPrices.high.toLocaleString()} over the next 48-72h.`
+      reasoning: reason,
+      riskFactor: risk,
+      groundedPrediction: pred
     });
   }
 });

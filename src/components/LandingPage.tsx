@@ -6,13 +6,14 @@ import { Plus } from "lucide-react";
 interface LandingPageProps {
   onLogin: () => void;
   onRegister: () => void;
+  lang: "id" | "en";
+  setLang: (lang: "id" | "en") => void;
 }
 
-export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
+export default function LandingPage({ onLogin, onRegister, lang, setLang }: LandingPageProps) {
   const lineCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const dotCanvasRef = useRef<HTMLCanvasElement | null>(null);
   
-  const [lang, setLang] = useState<"id" | "en">("id");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   // Real-time ticker price states
@@ -1878,41 +1879,31 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       <nav>
         <div className="nav-logo flex items-center gap-2">
           <img 
-            src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+            src="https://res.cloudinary.com/dbckdslrw/image/upload/v1781410573/vyora-logo_hjxxld.png" 
             alt="Vyora" 
-            className="h-12 w-auto object-contain"
+            className="h-20 md:h-24 w-auto object-contain"
             referrerPolicy="no-referrer"
           />
         </div>
         
         <ul className="nav-links">
-          <li><a href="#how">How It Works</a></li>
-          <li><a href="#features">Features</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><button onClick={onLogin} className="nav-cta border-none outline-none">Mulai Gratis</button></li>
+          <li><a href="#how">{lang === "id" ? "Cara Kerja" : "How It Works"}</a></li>
+          <li><a href="#features">{lang === "id" ? "Fitur" : "Features"}</a></li>
+          <li><a href="#pricing">{lang === "id" ? "Harga" : "Pricing"}</a></li>
+          <li><button onClick={onLogin} className="nav-cta border-none outline-none">{lang === "id" ? "Mulai Gratis" : "Start Free"}</button></li>
         </ul>
 
         <div className="flex items-center gap-2">
           <div className="flex">
             <button 
               onClick={() => setLang("id")} 
-              className="font-sans text-[10px] font-bold py-1 px-2.5 rounded-l border border-slate-700/80 cursor-pointer"
-              style={{
-                background: lang === "id" ? "rgba(0,255,136,0.15)" : "transparent",
-                color: lang === "id" ? "#00ff88" : "#445566",
-                borderColor: lang === "id" ? "#00ff88" : "var(--border2)"
-              }}
+              className={`font-sans text-[10px] font-bold py-1 px-2.5 rounded-l border cursor-pointer transition-colors ${lang === "id" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 z-10 relative" : "bg-transparent text-slate-400 border-slate-700/80 hover:text-slate-200 z-0 relative"}`}
             >
               ID
             </button>
             <button 
               onClick={() => setLang("en")} 
-              className="font-sans text-[10px] font-bold py-1 px-2.5 rounded-r border-t border-b border-r border-slate-700/80 cursor-pointer"
-              style={{
-                background: lang === "en" ? "rgba(0,255,136,0.15)" : "transparent",
-                color: lang === "en" ? "#00ff88" : "#445566",
-                borderColor: lang === "en" ? "#00ff88" : "var(--border2)"
-              }}
+              className={`font-sans text-[10px] font-bold py-1 px-2.5 rounded-r border-t border-b border-r -ml-px cursor-pointer transition-colors ${lang === "en" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 border-l z-10 relative" : "bg-transparent text-slate-400 border-slate-700/80 border-l hover:text-slate-200 z-0 relative"}`}
             >
               EN
             </button>
@@ -1933,11 +1924,11 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       {/* MOBILE MENU PANEL */}
       <div className={`nav-mobile-menu ${mobileMenuOpen ? "open" : ""}`}>
         <ul>
-          <li><a href="#how" onClick={() => setMobileMenuOpen(false)} className="mobile-link">How It Works</a></li>
-          <li><a href="#features" onClick={() => setMobileMenuOpen(false)} className="mobile-link">Features</a></li>
-          <li><a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="mobile-link">Pricing</a></li>
+          <li><a href="#how" onClick={() => setMobileMenuOpen(false)} className="mobile-link">{lang === "id" ? "Cara Kerja" : "How It Works"}</a></li>
+          <li><a href="#features" onClick={() => setMobileMenuOpen(false)} className="mobile-link">{lang === "id" ? "Fitur" : "Features"}</a></li>
+          <li><a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="mobile-link">{lang === "id" ? "Harga" : "Pricing"}</a></li>
         </ul>
-        <button onClick={onLogin} className="nav-mobile-cta w-full border-none outline-none">🚀 Mulai Gratis</button>
+        <button onClick={onLogin} className="nav-mobile-cta w-full border-none outline-none">🚀 {lang === "id" ? "Mulai Gratis" : "Start Free"}</button>
       </div>
 
       {/* LIVE MARKET HORIZONTAL COIN TICKER */}
@@ -1970,7 +1961,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
         <div className="hero-bottom-fade"></div>
         <div className="hero-glow"></div>
         <div className="hero-content">
-          <div className="hero-badge">INTELLIGENT CRYPTO TRADING</div>
+          <div className="hero-badge">{lang === "id" ? "TRADING CRYPTO CERDAS" : "INTELLIGENT CRYPTO TRADING"}</div>
           <h1>{t["hero-h1"]}</h1>
           <p className="hero-sub">{t["hero-sub"]}</p>
           <div className="hero-actions">
@@ -1980,7 +1971,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
           <div className="stats-strip">
             <div className="stat-item">
               <span className="stat-num">24/7</span>
-              <span className="stat-label">Bot Aktif</span>
+              <span className="stat-label">{lang === "id" ? "Bot Aktif" : "Active Bot"}</span>
             </div>
             <div className="stat-item">
               <span className="stat-num">61%+</span>
@@ -1992,7 +1983,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             </div>
             <div className="stat-item">
               <span className="stat-num">47</span>
-              <span className="stat-label">Trades Bulan Ini</span>
+              <span className="stat-label">{lang === "id" ? "Trades Bulan Ini" : "Trades This Month"}</span>
             </div>
           </div>
         </div>
@@ -2064,7 +2055,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               </p>
               <div className="feature-metric">
                 <span className="metric-num">71%</span>
-                <span className="metric-label">Avg. Confidence Score</span>
+                <span className="metric-label">{lang === "id" ? "Rata-rata Skor Keyakinan" : "Avg. Confidence Score"}</span>
               </div>
             </div>
             <div className="feature-card">
@@ -2077,7 +2068,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               </p>
               <div className="feature-metric">
                 <span className="metric-num">99.9%</span>
-                <span className="metric-label">Bot Uptime</span>
+                <span className="metric-label">{lang === "id" ? "Uptime Bot" : "Bot Uptime"}</span>
               </div>
             </div>
             <div className="feature-card">
@@ -2090,7 +2081,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               </p>
               <div className="feature-metric">
                 <span className="metric-num">1.5%</span>
-                <span className="metric-label">Max Stop Loss Per Trade</span>
+                <span className="metric-label">{lang === "id" ? "Maks. Stop Loss Per Perdagangan" : "Max Stop Loss Per Trade"}</span>
               </div>
             </div>
             <div className="feature-card">
@@ -2103,7 +2094,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               </p>
               <div className="feature-metric">
                 <span className="metric-num">Gemini 3.5 Flash</span>
-                <span className="metric-label">Powered by Google AI</span>
+                <span className="metric-label">{lang === "id" ? "Didukung oleh Google AI" : "Powered by Google AI"}</span>
               </div>
             </div>
           </div>
@@ -2118,10 +2109,10 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               <div className="demo-card">
                 <div className="signal-badge">
                   <div className="signal-dot"></div>
-                  <span className="signal-label">AI Signal · BTC/USDT · Live</span>
+                  <span className="signal-label">{lang === "id" ? "Sinyal AI · BTC/USDT · Live" : "AI Signal · BTC/USDT · Live"}</span>
                 </div>
-                <div className="signal-action">BUY</div>
-                <div className="signal-confidence">HIGH CONFIDENCE · {demoRsi > "50" ? "74%" : "68%"}</div>
+                <div className="signal-action">{lang === "id" ? "BELI" : "BUY"}</div>
+                <div className="signal-confidence">{lang === "id" ? "KEYAKINAN TINGGI" : "HIGH CONFIDENCE"} · {demoRsi > "50" ? "74%" : "68%"}</div>
                 
                 <div className="signal-grid">
                   <div className="signal-item">
@@ -2150,7 +2141,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
                 </div>
 
                 <div className="mt-4 p-2 bg-white/5 border border-slate-850 rounded text-[9px] text-slate-500 uppercase text-center tracking-wider">
-                  ⚠️ DEMO SIGNAL · BUKAN REKOMENDASI INVESTASI · SELALU LAKUKAN RISET SENDIRI
+                  ⚠️ {lang === "id" ? "DEMO SIGNAL · BUKAN REKOMENDASI INVESTASI · SELALU LAKUKAN RISET SENDIRI" : "DEMO SIGNAL · NOT INVESTMENT ADVICE · ALWAYS DO YOUR OWN RESEARCH"}
                 </div>
               </div>
             </div>
@@ -2163,7 +2154,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               <div className="demo-point">
                 <div className="demo-point-icon">⚡</div>
                 <div>
-                  <h4 className="demo-point-title">Eksekusi &lt; 100ms</h4>
+                  <h4 className="demo-point-title">{lang === "id" ? "Eksekusi < 100ms" : "Execution < 100ms"}</h4>
                   <p className="demo-point-desc">
                     {lang === "id"
                       ? "Bot mengeksekusi order dalam milidetik setelah sinyal terkonfirmasi — lebih cepat dari trader manual manapun."
@@ -2174,7 +2165,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               <div className="demo-point">
                 <div className="demo-point-icon">🧠</div>
                 <div>
-                  <h4 className="demo-point-title">Multi-indikator Analysis</h4>
+                  <h4 className="demo-point-title">{lang === "id" ? "Multi-indikator Analysis" : "Multi-indicator Analysis"}</h4>
                   <p className="demo-point-desc">
                     {lang === "id"
                       ? "EMA, RSI, Volume, MA200 dianalisa bersamaan. Sinyal hanya dieksekusi jika minimal 3 dari 4 indikator konfirmasi."
@@ -2185,7 +2176,7 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
               <div className="demo-point">
                 <div className="demo-point-icon">📱</div>
                 <div>
-                  <h4 className="demo-point-title">Notifikasi Real-time</h4>
+                  <h4 className="demo-point-title">{lang === "id" ? "Notifikasi Real-time" : "Real-time Notifications"}</h4>
                   <p className="demo-point-desc">
                     {lang === "id"
                       ? "Dapat notifikasi setiap order masuk, TP tercapai, atau SL triggered langsung ke WhatsApp/Telegram kamu."
@@ -2354,18 +2345,26 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
           <div className="testi-grid reveal">
             <div className="testi-card">
               <div className="testi-stars">★★★★★</div>
-              <p className="testi-text">"Udah 3 bulan pakai Vyora Pro. Bot-nya konsisten profit tiap minggu. Setup-nya gampang banget, cocok buat yang sibuk kayak saya."</p>
+              <p className="testi-text">
+                {lang === "id" 
+                  ? "\"Udah 3 bulan pakai Vyora Pro. Bot-nya konsisten profit tiap minggu. Setup-nya gampang banget, cocok buat yang sibuk kayak saya.\""
+                  : "\"Have been using Vyora Pro for 3 months. The bot consistently generates profit every week. Setup is super easy, perfect for busy folks like me.\""}
+              </p>
               <div className="testi-author">
                 <div className="testi-avatar">👨</div>
                 <div>
                   <h5 className="testi-name">Rizky A.</h5>
-                  <span className="testi-role">Pengusaha · Jakarta</span>
+                  <span className="testi-role">{lang === "id" ? "Pengusaha" : "Entrepreneur"} · Jakarta</span>
                 </div>
               </div>
             </div>
             <div className="testi-card">
               <div className="testi-stars">★★★★★</div>
-              <p className="testi-text">"Sinyal-nya akurat dan bot langsung eksekusi otomatis. Profit bulan pertama udah nutup biaya langganan 3x lipat. Worth banget!"</p>
+              <p className="testi-text">
+                {lang === "id"
+                  ? "\"Sinyal-nya akurat dan bot langsung eksekusi otomatis. Profit bulan pertama udah nutup biaya langganan 3x lipat. Worth banget!\""
+                  : "\"The signals are accurate and the bot executes entirely automatically. First month's profit already covered 3x the subscription cost. Absolutely worth it!\""}
+              </p>
               <div className="testi-author">
                 <div className="testi-avatar">👩</div>
                 <div>
@@ -2376,12 +2375,16 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
             </div>
             <div className="testi-card">
               <div className="testi-stars">★★★★☆</div>
-              <p className="testi-text">"AI Advisor-nya berguna banget buat belajar analisa. Dashboard-nya clean dan informatif. Highly recommended buat pemula crypto."</p>
+              <p className="testi-text">
+                {lang === "id"
+                  ? "\"AI Advisor-nya berguna banget buat belajar analisa. Dashboard-nya clean dan informatif. Highly recommended buat pemula crypto.\""
+                  : "\"The AI Advisor is incredibly useful for learning analysis. The dashboard is clean and informative. Highly recommended for crypto beginners.\""}
+              </p>
               <div className="testi-author">
                 <div className="testi-avatar">👨</div>
                 <div>
                   <h5 className="testi-name">Doni P.</h5>
-                  <span className="testi-role">Mahasiswa · Surabaya</span>
+                  <span className="testi-role">{lang === "id" ? "Mahasiswa" : "Student"} · Surabaya</span>
                 </div>
               </div>
             </div>
@@ -2450,20 +2453,20 @@ export default function LandingPage({ onLogin, onRegister }: LandingPageProps) {
       {/* FOOTER AREA */}
       <footer>
         <div className="footer-inner mb-6">
-          <div className="footer-logo">
+          <div className="footer-logo mb-4 md:mb-0">
             <img 
-              src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+              src="https://res.cloudinary.com/dbckdslrw/image/upload/v1781410573/vyora-logo_hjxxld.png" 
               alt="Vyora" 
-              className="h-12 w-auto object-contain"
+              className="h-24 md:h-32 w-auto object-contain"
               referrerPolicy="no-referrer"
             />
           </div>
           <ul className="footer-links">
-            <li><a href="#how">How It Works</a></li>
-            <li><a href="#features">Features</a></li>
-            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#how">{lang === "id" ? "Cara Kerja" : "How It Works"}</a></li>
+            <li><a href="#features">{lang === "id" ? "Fitur" : "Features"}</a></li>
+            <li><a href="#pricing">{lang === "id" ? "Harga" : "Pricing"}</a></li>
             <li><a href="#faq">{lang === "id" ? "Pertanyaan Umum" : "FAQ"}</a></li>
-            <li><button onClick={onLogin} className="bg-transparent border-none text-slate-500 hover:text-slate-355 cursor-pointer hover:text-slate-300">Login</button></li>
+            <li><button onClick={onLogin} className="bg-transparent border-none text-slate-500 hover:text-slate-355 cursor-pointer hover:text-slate-300">{lang === "id" ? "Masuk" : "Login"}</button></li>
           </ul>
         </div>
         <div className="footer-inner mt-4 border-t border-slate-900/60 pt-6">

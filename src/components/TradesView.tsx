@@ -11,9 +11,10 @@ import { CompleteState, Trade } from "../types";
 
 interface TradesViewProps {
   state: CompleteState;
+  lang: "id" | "en";
 }
 
-export default function TradesView({ state }: TradesViewProps) {
+export default function TradesView({ state, lang }: TradesViewProps) {
   const { trades } = state;
 
   return (
@@ -21,10 +22,10 @@ export default function TradesView({ state }: TradesViewProps) {
       {/* Banner */}
       <header className="p-5 rounded-2xl bg-slate-900 border border-slate-800">
         <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-          Automated Ledger History
+          {lang === "id" ? "Riwayat Buku Besar Otomatis" : "Automated Ledger History"}
         </h2>
         <p className="text-xs text-slate-400 mt-1">
-          Complete compliance list of buy orders, target take-profits, stop-out logs, and manual portfolio adjust transactions.
+          {lang === "id" ? "Daftar lengkap pesanan beli, target ambil untung, log stop-out, dan transaksi penyesuaian portofolio manual." : "Complete compliance list of buy orders, target take-profits, stop-out logs, and manual portfolio adjust transactions."}
         </p>
       </header>
 
@@ -32,10 +33,10 @@ export default function TradesView({ state }: TradesViewProps) {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
         <div className="p-4 border-b border-slate-800/80 bg-slate-900/50 flex justify-between items-center">
           <h3 className="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">
-            Consolidated Ledger
+            {lang === "id" ? "Buku Besar Konsolidasi" : "Consolidated Ledger"}
           </h3>
           <span className="text-[10px] bg-slate-800 text-slate-400 font-mono py-0.5 px-2 rounded-full font-bold">
-            {trades.length} RECORDED ENTRIES
+            {trades.length} {lang === "id" ? "ENTRI TERCATAT" : "RECORDED ENTRIES"}
           </span>
         </div>
 
@@ -43,20 +44,20 @@ export default function TradesView({ state }: TradesViewProps) {
           {trades.length === 0 ? (
             <div className="p-16 text-center text-slate-500">
               <Clock className="mx-auto h-8 w-8 text-slate-700 mb-3" />
-              <p className="text-xs">No active ledger entry records compiled.</p>
+              <p className="text-xs">{lang === "id" ? "Tidak ada catatan buku besar." : "No active ledger entry records compiled."}</p>
             </div>
           ) : (
             <table className="w-full text-left border-collapse text-xs">
               <thead className="bg-slate-950/40 text-slate-500 font-semibold font-mono uppercase tracking-wider border-b border-slate-800/60 select-none">
                 <tr>
-                  <th className="py-3.5 px-5">Time / ID</th>
-                  <th className="py-3.5 px-4">Asset symbol</th>
-                  <th className="py-3.5 px-4 text-center">Trade Type</th>
-                  <th className="py-3.5 px-4 text-right">Unit Price</th>
-                  <th className="py-3.5 px-4 text-right">Amount Filled</th>
-                  <th className="py-3.5 px-4 text-right">Total Size</th>
-                  <th className="py-3.5 px-4 text-right">Realized PnL</th>
-                  <th className="py-3.5 px-5 text-right">Audit Status</th>
+                  <th className="py-3.5 px-5">{lang === "id" ? "Waktu / ID" : "Time / ID"}</th>
+                  <th className="py-3.5 px-4">{lang === "id" ? "Simbol Aset" : "Asset symbol"}</th>
+                  <th className="py-3.5 px-4 text-center">{lang === "id" ? "Tipe " : "Trade Type"}</th>
+                  <th className="py-3.5 px-4 text-right">{lang === "id" ? "Harga Unit" : "Unit Price"}</th>
+                  <th className="py-3.5 px-4 text-right">{lang === "id" ? "Jumlah" : "Amount Filled"}</th>
+                  <th className="py-3.5 px-4 text-right">{lang === "id" ? "Total Ukuran" : "Total Size"}</th>
+                  <th className="py-3.5 px-4 text-right">{lang === "id" ? "PNL Realisasi" : "Realized PnL"}</th>
+                  <th className="py-3.5 px-5 text-right">{lang === "id" ? "Status Audit" : "Audit Status"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50 text-slate-350">
@@ -148,7 +149,7 @@ export default function TradesView({ state }: TradesViewProps) {
                       <td className="py-4 px-5 text-right font-sans">
                         <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-400">
                           <CheckCircle className="h-3 w-3" />
-                          <span>COMPLETED</span>
+                          <span>{lang === "id" ? "SELESAI" : "COMPLETED"}</span>
                         </span>
                       </td>
                     </tr>

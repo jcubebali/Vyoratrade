@@ -16,9 +16,10 @@ interface DashboardViewProps {
   state: CompleteState;
   onToggleBot: () => void;
   onSetActiveTab: (tab: string) => void;
+  lang: "id" | "en";
 }
 
-export default function DashboardView({ state, onToggleBot, onSetActiveTab }: DashboardViewProps) {
+export default function DashboardView({ state, onToggleBot, onSetActiveTab, lang }: DashboardViewProps) {
   const { signals, botConfig, assets, activePositions, balance, trades } = state;
 
   // Calculate Net Asset Value (NAV) dynamically
@@ -40,10 +41,12 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-900 border border-slate-800 p-5 rounded-2xl">
         <div>
           <h1 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            AI Quant Terminal Overview
+            {lang === "id" ? "Ringkasan Terminal AI Quant" : "AI Quant Terminal Overview"}
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Track real-time quantum signals, bot activity bounds, and decentralized collateral indexes instantly.
+            {lang === "id" 
+              ? "Lacak sinyal kuantum real-time, batas aktivitas bot, dan indeks jaminan terdesentralisasi secara instan." 
+              : "Track real-time quantum signals, bot activity bounds, and decentralized collateral indexes instantly."}
           </p>
         </div>
         <div className="flex items-center gap-2.5 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-mono font-bold select-none">
@@ -51,7 +54,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
           </span>
-          <span>FEED: {state.dataSource || "LIVE BINANCE API"}</span>
+          <span>{lang === "id" ? "SUMBER" : "FEED"}: {state.dataSource || "LIVE BINANCE API"}</span>
         </div>
       </div>
 
@@ -84,7 +87,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">
-              Net Capital Valuation (NAV)
+              {lang === "id" ? "Valuasi Modal Bersih (NAV)" : "Net Capital Valuation (NAV)"}
             </span>
             <Wallet className="h-4.5 w-4.5 text-emerald-400" />
           </div>
@@ -92,7 +95,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
             ${totalNAV.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </h3>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
-            Cash USDT collateral: <b className="text-slate-200">${cashVal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</b>
+            {lang === "id" ? "Agunan Kas USDT:" : "Cash USDT collateral:"} <b className="text-slate-200">${cashVal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</b>
           </p>
           <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/5 rounded-full blur-2xl" />
         </div>
@@ -108,11 +111,11 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
           <div className="flex items-center space-x-2.5">
             <span className={`w-3 h-3 rounded-full ${botStatus === "RUNNING" ? "bg-emerald-400 animate-pulse shadow-md shadow-emerald-400" : "bg-slate-700"}`} />
             <h3 className="text-xl font-bold text-slate-100 uppercase font-mono">
-              {botStatus === "RUNNING" ? "ACTIVE" : "STANDBY"}
+              {botStatus === "RUNNING" ? (lang === "id" ? "AKTIF" : "ACTIVE") : (lang === "id" ? "SIAGA" : "STANDBY")}
             </h3>
           </div>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
-            Risk strategy: <b className="text-slate-200">{botConfig.strategy}</b>
+            {lang === "id" ? "Strategi risiko:" : "Risk strategy:"} <b className="text-slate-200">{botConfig.strategy}</b>
           </p>
           <div className="absolute top-0 right-0 h-16 w-16 bg-indigo-500/5 rounded-full blur-2xl" />
         </div>
@@ -121,7 +124,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">
-              Total Realized PnL
+              {lang === "id" ? "Total PnL Terrealisasi" : "Total Realized PnL"}
             </span>
             <TrendingUp className="h-4.5 w-4.5 text-emerald-400" />
           </div>
@@ -129,7 +132,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
             {totalPnL >= 0 ? "+" : ""}${totalPnL.toFixed(4)}
           </h3>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
-            From <b className="text-slate-200">{totalTrades}</b> completed trades
+            {lang === "id" ? "Dari" : "From"} <b className="text-slate-200">{totalTrades}</b> {lang === "id" ? "perdagangan selesai" : "completed trades"}
           </p>
           <div className="absolute top-0 right-0 h-16 w-16 bg-emerald-500/5 rounded-full blur-2xl" />
         </div>
@@ -138,7 +141,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">
-              Strategy Win Rate
+              {lang === "id" ? "Rasio Kemenangan Strategi" : "Strategy Win Rate"}
             </span>
             <ShieldCheck className="h-4.5 w-4.5 text-indigo-400" />
           </div>
@@ -146,7 +149,7 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
             {winRate.toFixed(1)}%
           </h3>
           <p className="text-[11px] text-slate-400 mt-2 font-medium">
-            <b className="text-emerald-400">{wins}</b> Winning / <b className="text-rose-400">{losses}</b> Losing
+            <b className="text-emerald-400">{wins}</b> {lang === "id" ? "Menang" : "Winning"} / <b className="text-rose-400">{losses}</b> {lang === "id" ? "Kalah" : "Losing"}
           </p>
           <div className="absolute top-0 right-0 h-16 w-16 bg-violet-500/5 rounded-full blur-2xl" />
         </div>
@@ -157,9 +160,9 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
         <div className="flex gap-3">
           <AlertCircle className="h-5 w-5 text-indigo-400 shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-xs font-bold text-slate-200">Vyora Bot Risk Engine Status</h4>
+            <h4 className="text-xs font-bold text-slate-200">{lang === "id" ? "Status Vyora Bot Risk Engine" : "Vyora Bot Risk Engine Status"}</h4>
             <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed font-sans max-w-xl">
-              When enabled, our high-frequency quantum framework utilizes in-memory API cycles to simulate or execute orders under live intervals. Double-check margin bounds.
+              {lang === "id" ? "Saat diaktifkan, quantum framework frekuensi tinggi kami menggunakan siklus API dalam memori untuk menyimulasikan atau mengeksekusi order dengan interval langsung. Periksa kembali batas margin." : "When enabled, our high-frequency quantum framework utilizes in-memory API cycles to simulate or execute orders under live intervals. Double-check margin bounds."}
             </p>
           </div>
         </div>
@@ -174,12 +177,12 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
           {botStatus === "RUNNING" ? (
             <>
               <Square className="h-3.5 w-3.5 fill-current" />
-              <span>TERMINATE ACTIVE PROCESS</span>
+              <span>{lang === "id" ? "HENTIKAN PROSES AKTIF" : "TERMINATE ACTIVE PROCESS"}</span>
             </>
           ) : (
             <>
               <Play className="h-3.5 w-3.5 fill-current" />
-              <span>ACTIVATE AUTO RUNNERS</span>
+              <span>{lang === "id" ? "AKTIFKAN AUTO RUNNER" : "ACTIVATE AUTO RUNNERS"}</span>
             </>
           )}
         </button>
@@ -233,31 +236,31 @@ export default function DashboardView({ state, onToggleBot, onSetActiveTab }: Da
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
           <div className="p-4 border-b border-slate-800 bg-slate-900/50 flex justify-between items-center select-none">
             <h3 className="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">
-              REAL-TIME MARGIN POSITIONS
+              {lang === "id" ? "POSISI MARGIN REAL-TIME" : "REAL-TIME MARGIN POSITIONS"}
             </h3>
-            <span className="text-[10px] text-slate-500 font-mono font-medium">Auto-refreshing live tickers</span>
+            <span className="text-[10px] text-slate-500 font-mono font-medium">{lang === "id" ? "Live ticker auto-refresh" : "Auto-refreshing live tickers"}</span>
           </div>
 
           <div className="overflow-x-auto">
             {activePositions.length === 0 ? (
               <div className="p-16 text-center text-slate-500">
                 <Clock className="mx-auto h-8 w-8 text-slate-750 mb-3" />
-                <p className="text-xs font-medium text-slate-400">No active positions open in market corridors.</p>
+                <p className="text-xs font-medium text-slate-400">{lang === "id" ? "Tidak ada posisi aktif di pasar." : "No active positions open in market corridors."}</p>
                 <p className="text-[10px] text-slate-500 max-w-xs mx-auto mt-1 leading-relaxed">
-                  Lock parameters inside Bot Risk tab and trigger Initiate Run to start automatic market sweeps.
+                  {lang === "id" ? "Kunci parameter di tab Kontrol Bot dan mulai proses untuk menjaring market secara otomatis." : "Lock parameters inside Bot Risk tab and trigger Initiate Run to start automatic market sweeps."}
                 </p>
               </div>
             ) : (
               <table className="w-full text-left text-xs border-collapse font-mono text-slate-300">
                 <thead className="bg-slate-950/45 text-slate-500 font-semibold font-mono uppercase tracking-wider border-b border-slate-800 select-none">
                   <tr>
-                    <th className="py-3 px-5">Target symbol</th>
-                    <th className="py-3 px-4 text-center">Direction</th>
-                    <th className="py-3 px-4 text-right">Size Amount</th>
-                    <th className="py-3 px-4 text-right">Entry Price</th>
-                    <th className="py-3 px-4 text-right">Current Price</th>
-                    <th className="py-3 px-4 text-right">Allocated Margin</th>
-                    <th className="py-3 px-4 text-right">Accumulated profit (PNL)</th>
+                    <th className="py-3 px-5">{lang === "id" ? "Simbol Target" : "Target symbol"}</th>
+                    <th className="py-3 px-4 text-center">{lang === "id" ? "Arah" : "Direction"}</th>
+                    <th className="py-3 px-4 text-right">{lang === "id" ? "Jumlah" : "Size Amount"}</th>
+                    <th className="py-3 px-4 text-right">{lang === "id" ? "Harga Masuk" : "Entry Price"}</th>
+                    <th className="py-3 px-4 text-right">{lang === "id" ? "Harga Saat Ini" : "Current Price"}</th>
+                    <th className="py-3 px-4 text-right">{lang === "id" ? "Margin Alokasi" : "Allocated Margin"}</th>
+                    <th className="py-3 px-4 text-right">{lang === "id" ? "Akumulasi PNL" : "Accumulated profit (PNL)"}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50 text-slate-350">

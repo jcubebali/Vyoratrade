@@ -5,9 +5,10 @@ import { Sparkles, Key, Mail, Lock, Loader2, AlertCircle, ArrowRight } from "luc
 
 interface LoginViewProps {
   onBackToHome?: () => void;
+  lang: "id" | "en";
 }
 
-export default function LoginView({ onBackToHome }: LoginViewProps) {
+export default function LoginView({ onBackToHome, lang }: LoginViewProps) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -85,12 +86,11 @@ export default function LoginView({ onBackToHome }: LoginViewProps) {
           {/* Header Area */}
           <div className="flex flex-col items-center mb-6">
             <img 
-              src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+              src="https://res.cloudinary.com/dbckdslrw/image/upload/v1781410573/vyora-logo_hjxxld.png" 
               alt="Vyora Logo" 
               className="h-24 w-auto object-contain"
               referrerPolicy="no-referrer"
             />
-            <div className="w-12 h-0.5 bg-emerald-500/30 mt-4 rounded-full" />
           </div>
 
           {!isLogin && (

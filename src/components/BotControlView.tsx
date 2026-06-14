@@ -19,9 +19,10 @@ interface BotControlViewProps {
   state: CompleteState;
   onToggleBot: () => void;
   onConfigureBot: (updates: any) => Promise<void>;
+  lang: "id" | "en";
 }
 
-export default function BotControlView({ state, onToggleBot, onConfigureBot }: BotControlViewProps) {
+export default function BotControlView({ state, onToggleBot, onConfigureBot, lang }: BotControlViewProps) {
   const { botConfig } = state;
   const [strategy, setStrategy] = useState(botConfig.strategy);
   const [symbol, setSymbol] = useState(botConfig.symbol);
@@ -198,9 +199,18 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
   };
 
   const strategiesList = [
-    { name: "EMA_CROSS + RSI", desc: "Launches buy positions when the short-term EMA cross triggers over major supports coupled with an RSI metric below 40." },
-    { name: "MACD DIVERGENCE SCALPER", desc: "Scalps localized trends by evaluating MACD divergence overlays on shorter 5M candles." },
-    { name: "SURE-STRIKE BREAKOUT", desc: "Identifies consolidations and places boundary breakout triggers with immediate trailing stop-losses." }
+    { 
+      name: "EMA_CROSS + RSI", 
+      desc: lang === "id" ? "Meluncurkan posisi beli ketika persilangan EMA jangka pendek memicu batas dukungan dengan metrik RSI kurang dari 40." : "Launches buy positions when the short-term EMA cross triggers over major supports coupled with an RSI metric below 40." 
+    },
+    { 
+      name: "MACD DIVERGENCE SCALPER", 
+      desc: lang === "id" ? "Melakukan scalping dengan mengevaluasi tumpang tindih divergensi MACD pada candle 5M pendek." : "Scalps localized trends by evaluating MACD divergence overlays on shorter 5M candles." 
+    },
+    { 
+      name: "SURE-STRIKE BREAKOUT", 
+      desc: lang === "id" ? "Teridentifikasi konsolidasi dan menempatkan pemicu penembusan rentang batas dengan stop-loss mengikuti." : "Identifies consolidations and places boundary breakout triggers with immediate trailing stop-losses." 
+    }
   ];
 
   return (
@@ -209,10 +219,10 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
       <header className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-            Auto-Trading Algorithm Console
+            {lang === "id" ? "Konsol Algoritma Auto-Trading" : "Auto-Trading Algorithm Console"}
           </h2>
           <p className="text-xs text-slate-400">
-            Design risk management thresholds and choose indicators guiding your automated Vyora system.
+            {lang === "id" ? "Atur batasan risiko dan indikator untuk sistem Vyora otomatis Anda." : "Design risk management thresholds and choose indicators guiding your automated Vyora system."}
           </p>
         </div>
 
@@ -228,12 +238,12 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
           {botConfig.isActive ? (
             <>
               <Square className="h-4 w-4 fill-current" />
-              <span>TERMINATE BOT PROCESS</span>
+              <span>{lang === "id" ? "HENTIKAN PROSES BOT" : "TERMINATE BOT PROCESS"}</span>
             </>
           ) : (
             <>
               <Play className="h-4 w-4 fill-current" />
-              <span>INITIATE ALGORITHM RUN</span>
+              <span>{lang === "id" ? "MULAI JALAN ALGORITMA" : "INITIATE ALGORITHM RUN"}</span>
             </>
           )}
         </button>
@@ -245,14 +255,14 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
         <form onSubmit={handleSubmit} className="lg:col-span-2 p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-300 font-mono uppercase tracking-wider mb-2 border-b border-slate-800 pb-3">
             <Sliders className="h-4.5 w-4.5 text-emerald-400" />
-            <span>Risk Dial Controls</span>
+            <span>{lang === "id" ? "Kontrol Risiko" : "Risk Dial Controls"}</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Target Asset Pair */}
             <div>
               <label className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1.5 font-semibold">
-                Target Trading Asset
+                {lang === "id" ? "Aset Trading Target" : "Target Trading Asset"}
               </label>
               <select
                 value={symbol}
@@ -269,7 +279,7 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
             {/* Trading Capital */}
             <div>
               <label className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1.5 font-semibold">
-                Max Capital Per Trade (USDT)
+                {lang === "id" ? "Maks Modal Per Perdagangan (USDT)" : "Max Capital Per Trade (USDT)"}
               </label>
               <input
                 type="number"
@@ -284,41 +294,43 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
             {/* Leverage Multiplier select */}
             <div>
               <label className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1.5 font-semibold">
-                Leverage Multiplier (Futures)
+                {lang === "id" ? "Pengali Leverage (Futures)" : "Leverage Multiplier (Futures)"}
               </label>
               <select
                 value={leverage}
                 onChange={(e) => setLeverage(e.target.value)}
                 className="w-full bg-slate-950 border border-slate-800 hover:border-slate-705 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-emerald-500"
               >
-                <option value="1">1x (No Leverage - Spot equivalent)</option>
-                <option value="3">3x Leverage</option>
-                <option value="5">5x Leverage</option>
-                <option value="10">10x Leverage</option>
-                <option value="20">20x Leverage</option>
-                <option value="50">50x Leverage</option>
+                <option value="1">{lang === "id" ? "1x (Tanpa Leverage)" : "1x (No Leverage - Spot equivalent)"}</option>
+                <option value="3">{lang === "id" ? "3x Leverage" : "3x Leverage"}</option>
+                <option value="5">{lang === "id" ? "5x Leverage" : "5x Leverage"}</option>
+                <option value="10">{lang === "id" ? "10x Leverage" : "10x Leverage"}</option>
+                <option value="20">{lang === "id" ? "20x Leverage" : "20x Leverage"}</option>
+                <option value="50">{lang === "id" ? "50x Leverage" : "50x Leverage"}</option>
               </select>
             </div>
 
             {/* SL/TP Mode Basis selector */}
             <div>
               <label className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1.5 font-semibold">
-                SL/TP Calculation Basis
+                {lang === "id" ? "Basis Perhitungan SL/TP" : "SL/TP Calculation Basis"}
               </label>
               <select
                 value={slTpMode}
                 onChange={(e) => setSlTpMode(e.target.value as "PRICE" | "ROE")}
                 className="w-full bg-slate-950 border border-slate-800 hover:border-slate-705 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-200 focus:outline-none focus:border-emerald-500"
               >
-                <option value="PRICE">Asset Price Movement % (Spot-Style)</option>
-                <option value="ROE">Leveraged Return ROE % (Futures-Style)</option>
+                <option value="PRICE">{lang === "id" ? "Pergerakan Harga Aset %" : "Asset Price Movement % (Spot-Style)"}</option>
+                <option value="ROE">{lang === "id" ? "Pengembalian Leverage ROE %" : "Leveraged Return ROE % (Futures-Style)"}</option>
               </select>
             </div>
 
             {/* Stop Loss % */}
             <div>
               <label className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1.5 font-semibold">
-                {slTpMode === "ROE" ? "Target Stop Loss (ROE %)" : "Hard Stop Loss Threshold (%)"}
+                {slTpMode === "ROE" 
+                  ? (lang === "id" ? "Batas Stop Loss Target (ROE %)" : "Target Stop Loss (ROE %)") 
+                  : (lang === "id" ? "Ambang Batas Stop Loss (%)" : "Hard Stop Loss Threshold (%)")}
               </label>
               <input
                 type="number"
@@ -334,7 +346,9 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
             {/* Take Profit % */}
             <div>
               <label className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1.5 font-semibold">
-                {slTpMode === "ROE" ? "Target Take Profit (ROE %)" : "Target Take Profit Level (%)"}
+                {slTpMode === "ROE" 
+                  ? (lang === "id" ? "Batas Take Profit Target (ROE %)" : "Target Take Profit (ROE %)") 
+                  : (lang === "id" ? "Tingkat Target Take Profit (%)" : "Target Take Profit Level (%)")}
               </label>
               <input
                 type="number"
@@ -373,7 +387,7 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
             {/* Trailing Stop % Gap */}
             <div className="md:col-span-2">
               <label className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1.5 font-semibold">
-                Trailing Stop Activation Interval (%)
+                {lang === "id" ? "Interval Aktivasi Trailing Stop (%)" : "Trailing Stop Activation Interval (%)"}
               </label>
               <input
                 type="number"
@@ -385,7 +399,9 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
                 min="0.01"
               />
               <p className="text-[10px] text-slate-500 font-medium mt-1.5 leading-relaxed font-sans">
-                Automatically adjusts the dynamic sell ceiling higher if the token surges by the set threshold interval, protecting realized profits.
+                {lang === "id" 
+                  ? "Secara otomatis menyesuaikan batas atas penjualan jika token melonjak sesuai ambang batas yang ditentukan, melindungi profit." 
+                  : "Automatically adjusts the dynamic sell ceiling higher if the token surges by the set threshold interval, protecting realized profits."}
               </p>
             </div>
 
@@ -435,7 +451,7 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-800/50 mt-4">
             {saveSuccess && (
               <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-                <Check className="h-4 w-4" /> Config Locked Successfully!
+                <Check className="h-4 w-4" /> {lang === "id" ? "Konfig Terkunci!" : "Config Locked Successfully!"}
               </span>
             )}
             <button
@@ -443,7 +459,7 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
               disabled={isSaving}
               className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-800 text-slate-950 font-bold px-5 py-2.5 rounded-xl cursor-pointer select-none text-xs tracking-wider uppercase flex items-center gap-1 transition"
             >
-              {isSaving ? "LOCKING..." : "Lock Config & Adjust Parameters"}
+              {isSaving ? (lang === "id" ? "MENGUNCI..." : "LOCKING...") : (lang === "id" ? "Kunci Konfig & Terapkan" : "Lock Config & Adjust Parameters")}
             </button>
           </div>
         </form>
@@ -452,7 +468,7 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
         <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 h-full space-y-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-slate-300 font-mono uppercase tracking-wider mb-2 border-b border-slate-800 pb-3">
             <Coins className="h-4.5 w-4.5 text-emerald-400" />
-            <span>Active Indicators</span>
+            <span>{lang === "id" ? "Indikator Aktif" : "Active Indicators"}</span>
           </div>
 
           <div className="space-y-4">
@@ -487,7 +503,7 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot }: B
           <div className="p-3.5 rounded-xl bg-orange-500/5 border border-orange-500/10 text-[11px] text-orange-350 leading-relaxed font-sans flex gap-2">
             <ShieldAlert className="h-5 w-5 text-orange-450 shrink-0" />
             <div>
-              <b>Audit warning:</b> Ensure you hold appropriate USDT collateral within your exchange wallets before running. All parameters are executed instantly inside active market timelines.
+              <b>{lang === "id" ? "Peringatan audit:" : "Audit warning:"}</b> {lang === "id" ? "Pastikan Anda memiliki jaminan USDT yang memadai di dompet bursa Anda sebelum menjalankan. Semua parameter dieksekusi secara instan dalam jadwal pasar yang aktif." : "Ensure you hold appropriate USDT collateral within your exchange wallets before running. All parameters are executed instantly inside active market timelines."}
             </div>
           </div>
         </div>

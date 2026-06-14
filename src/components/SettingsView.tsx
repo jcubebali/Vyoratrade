@@ -22,9 +22,10 @@ import { CompleteState } from "../types";
 interface SettingsViewProps {
   state: CompleteState;
   onSaveSettings: (settings: any) => Promise<void>;
+  lang: "id" | "en";
 }
 
-export default function SettingsView({ state, onSaveSettings }: SettingsViewProps) {
+export default function SettingsView({ state, onSaveSettings, lang }: SettingsViewProps) {
   const { settings } = state;
   const [exchangeKey, setExchangeKey] = useState(settings.binanceApiKey || "");
   const [exchangeSecret, setExchangeSecret] = useState(settings.binanceSecret || "");
@@ -200,10 +201,10 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
       {/* Banner */}
       <header className="p-5 rounded-2xl bg-slate-900 border border-slate-800">
         <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-          Platform Integrations & API Credentials
+          {lang === "id" ? "Integrasi Platform & Kredensial API" : "Platform Integrations & API Credentials"}
         </h2>
         <p className="text-xs text-slate-400 mt-1">
-          Securely plug private trading credentials, Singapore alert channels, or webhook tokens directly into state memory indexes.
+          {lang === "id" ? "Hubungkan secara aman kredensial trading pribadi, channel peringatan Singapura, atau token webhook langsung ke memori." : "Securely plug private trading credentials, Singapore alert channels, or webhook tokens directly into state memory indexes."}
         </p>
       </header>
       
@@ -217,7 +218,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
           <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-2 select-none">
             <h3 className="text-xs font-semibold text-slate-300 font-mono uppercase tracking-wider flex items-center gap-2">
               <Lock className="h-4.5 w-4.5 text-emerald-450 text-emerald-400" />
-              <span>Secret Vault Configurations</span>
+              <span>{lang === "id" ? "Konfigurasi Brankas Rahasia" : "Secret Vault Configurations"}</span>
             </h3>
 
             {/* Password view Toggle */}
@@ -230,12 +231,12 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
               {showSensitive ? (
                 <>
                   <EyeOff className="h-4 w-4" />
-                  <span>Obscure SECRETS</span>
+                  <span>{lang === "id" ? "Sembunyikan Rahasia" : "Obscure SECRETS"}</span>
                 </>
               ) : (
                 <>
                   <Eye className="h-4 w-4" />
-                  <span>DEOBSCURE SECRETS</span>
+                  <span>{lang === "id" ? "Lihat Rahasia" : "DEOBSCURE SECRETS"}</span>
                 </>
               )}
             </button>
@@ -246,7 +247,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
             {/* Webhook Token - Singapore Integration */}
             <div className="md:col-span-2 bg-indigo-500/5 p-4 rounded-xl border border-indigo-500/10 mb-2">
               <label className="text-[10px] font-mono uppercase font-bold text-indigo-400 block mb-1">
-                Singapore Bot Webhook Secret Token (Shared Key)
+                {lang === "id" ? "Token Rahasia Webhook Bot Singapura (Kunci Bersama)" : "Singapore Bot Webhook Secret Token (Shared Key)"}
               </label>
               <div className="flex gap-2">
                 <input
@@ -265,7 +266,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
             {/* Binance Key */}
             <div className="md:col-span-2">
               <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">
-                Binance Broker Spot Client Key (API_KEY)
+                Kunci Klien Broker Binance Spot (API_KEY)
               </label>
               <input
                 type={showSensitive ? "text" : "password"}
@@ -279,7 +280,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
             {/* Binance Secret */}
             <div className="md:col-span-2">
               <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">
-                Binance Broker Client Secret Key (API_SECRET)
+                Kunci Rahasia Klien Broker Binance (API_SECRET)
               </label>
               <input
                 type={showSensitive ? "text" : "password"}
@@ -293,7 +294,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
             {/* Telegram Bot Token */}
             <div>
               <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">
-                Telegram Bot API Key Token
+                Token API Key Bot Telegram
               </label>
               <input
                 type={showSensitive ? "text" : "password"}
@@ -307,7 +308,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
             {/* Telegram Chat ID */}
             <div>
               <label className="text-[10px] font-mono uppercase font-bold text-slate-400 block mb-1">
-                Target Telegram Channel/Chat ID
+                ID Chat/Channel Telegram Target
               </label>
               <input
                 type="text"
@@ -324,7 +325,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
             <div className="flex-1">
               {saveSuccess && (
                 <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1 font-sans">
-                  <Check className="h-4 w-4" /> Integrations Locked Successfully!
+                  <Check className="h-4 w-4" /> {lang === "id" ? "Integrasi Berhasil Dikunci!" : "Integrations Locked Successfully!"}
                 </span>
               )}
               {saveError && (
@@ -339,7 +340,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
               disabled={isSaving}
               className="bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-800 text-white font-bold px-5 py-2.5 rounded-xl cursor-pointer select-none text-xs tracking-wider uppercase flex items-center gap-1 transition font-sans"
             >
-              {isSaving ? "LOCKING..." : "SAVE INTEGRATION SECRETS"}
+              {isSaving ? (lang === "id" ? "MENGUNCI..." : "LOCKING...") : (lang === "id" ? "SIMPAN RAHASIA INTEGRASI" : "SAVE INTEGRATION SECRETS")}
             </button>
           </div>
         </form>
@@ -351,37 +352,37 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
           <div className="border-b border-slate-800 pb-3 select-none">
             <h3 className="text-xs font-semibold text-slate-300 font-mono uppercase tracking-wider flex items-center gap-2">
               <Key className="h-4.5 w-4.5 text-indigo-400" />
-              <span>System Diagnostic Monitor</span>
+              <span>{lang === "id" ? "Monitor Diagnostik Sistem" : "System Diagnostic Monitor"}</span>
             </h3>
-            <p className="text-[10px] text-slate-500 mt-1 leading-relaxed font-sans">Verification logs confirming status connections representing secure cloud APIs.</p>
+            <p className="text-[10px] text-slate-500 mt-1 leading-relaxed font-sans">{lang === "id" ? "Log verifikasi yang mengkonfirmasi status koneksi yang mewakili keamanan API awan." : "Verification logs confirming status connections representing secure cloud APIs."}</p>
           </div>
 
           <div className="space-y-3 font-mono text-[11px] leading-relaxed">
             
             {/* Webhook Status */}
             <div className="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg">
-              <span className="text-slate-400 font-medium">Singapore Bot Webhook</span>
+              <span className="text-slate-400 font-medium">{lang === "id" ? "Webhook Bot Singapura" : "Singapore Bot Webhook"}</span>
               <span className="flex items-center gap-1.5 text-indigo-400">
                 <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-                <span className="text-[9px]">READY FOR TRIGGERS</span>
+                <span className="text-[9px]">{lang === "id" ? "SIAP UNTUK PEMICU" : "READY FOR TRIGGERS"}</span>
               </span>
             </div>
 
             {/* Status 1: API */}
             <div className="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg">
-              <span className="text-slate-400 font-medium">Binance Core Link</span>
+              <span className="text-slate-400 font-medium">{lang === "id" ? "Tautan Inti Binance" : "Binance Core Link"}</span>
               <span className={`h-2 w-2 rounded-full ${exchangeKey ? "bg-emerald-400 shadow-sm shadow-emerald-450" : "bg-orange-500"}`} />
             </div>
 
             {/* Status 2: Mobile alerts */}
             <div className="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg">
-              <span className="text-slate-400 font-medium">Telegram Alert Channel</span>
+              <span className="text-slate-400 font-medium">{lang === "id" ? "Channel Peringatan Telegram" : "Telegram Alert Channel"}</span>
               <span className={`h-2 w-2 rounded-full ${telegramBotId && telegramChatId ? "bg-emerald-400 shadow-sm shadow-emerald-450" : "bg-orange-500"}`} />
             </div>
 
             {/* Status 3: Gemini system status */}
             <div className="flex items-center justify-between p-2.5 bg-slate-950 rounded-lg">
-              <span className="text-slate-400 font-medium font-sans">Gemini AI Audit Hub</span>
+              <span className="text-slate-400 font-medium font-sans">{lang === "id" ? "Pusat Audit Gemini AI" : "Gemini AI Audit Hub"}</span>
               <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-sm shadow-emerald-450" />
             </div>
 
@@ -390,7 +391,7 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
           <div className="p-3 bg-rose-500/5 rounded-xl border border-rose-500/10 text-[11px] text-rose-350 leading-relaxed font-medium font-sans flex gap-2">
             <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
             <div>
-              All credentials registered inside this workspace are decrypted and stored safely server-side. Vyora employees hold no visibility over these parameters.
+              {lang === "id" ? "Semua kredensial yang terdaftar di dalam ruang kerja ini dienkripsi dan disimpan dengan aman di sisi server. Karyawan Vyora tidak memiliki visibilitas atas parameter ini." : "All credentials registered inside this workspace are decrypted and stored safely server-side. Vyora employees hold no visibility over these parameters."}
             </div>
           </div>
         </div>
@@ -404,8 +405,8 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
               <Cpu className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-slate-100">Singapore Bot Webhook Connection Guide</h3>
-              <p className="text-xs text-slate-400">Integrate your active Singapore-hosted trading script to push transactions into this UI.</p>
+              <h3 className="text-sm font-bold text-slate-100">{lang === "id" ? "Panduan Koneksi Webhook Bot Singapura" : "Singapore Bot Webhook Connection Guide"}</h3>
+              <p className="text-xs text-slate-400">{lang === "id" ? "Integrasikan skrip trading hosting Singapura aktif Anda untuk mendorong transaksi ke antarmuka ini." : "Integrate your active Singapore-hosted trading script to push transactions into this UI."}</p>
             </div>
           </div>
 
@@ -443,12 +444,12 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
                 {copiedText ? (
                   <>
                     <Check className="h-3 w-3 text-emerald-400" />
-                    <span className="text-emerald-400 text-[9px] font-sans">COPIED</span>
+                    <span className="text-emerald-400 text-[9px] font-sans">{lang === "id" ? "DISALIN" : "COPIED"}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="h-3 w-3" />
-                    <span>COPY SCRIPT</span>
+                    <span>{lang === "id" ? "SALIN SKRIP" : "COPY SCRIPT"}</span>
                   </>
                 )}
               </button>
@@ -462,50 +463,50 @@ async function postTradeToDashboard(symbol, type, price, amount, pnl = null) {
             <div className="p-4 bg-slate-950/40 border border-slate-850 rounded-xl space-y-2">
               <h4 className="font-semibold text-slate-200 flex items-center gap-1.5">
                 <Bookmark className="h-4 w-4 text-indigo-400" />
-                <span>Why Use Webhooks directly?</span>
+                <span>{lang === "id" ? "Mengapa Menggunakan Webhook Secara Langsung?" : "Why Use Webhooks directly?"}</span>
               </h4>
               <ul className="list-disc pl-4 space-y-1.5 text-slate-400 text-[11px]">
-                <li><strong>No Latency Loss</strong>: Your Singapore bot keeps trading on local SG servers instantly with zero interface lag.</li>
-                <li><strong>Absolute Security</strong>: Your Binance Private API Secret Keys remain stored on your private engine and are never exposed publicly.</li>
-                <li><strong>Full UI Sync</strong>: The instant your bot takes a position, it updates this dashboard, updates your cash balance, and logs history on the ledger live.</li>
+                <li><strong>{lang === "id" ? "Tanpa Kehilangan Latensi" : "No Latency Loss"}</strong>: {lang === "id" ? "Bot Singapura Anda tetap berdagang di server SG lokal secara instan tanpa ada lag." : "Your Singapore bot keeps trading on local SG servers instantly with zero interface lag."}</li>
+                <li><strong>{lang === "id" ? "Keamanan Mutlak" : "Absolute Security"}</strong>: {lang === "id" ? "Kunci Rahasia API Privat Binance Anda tetap tersimpan di server Anda dan tidak pernah terekspos ke publik." : "Your Binance Private API Secret Keys remain stored on your private engine and are never exposed publicly."}</li>
+                <li><strong>{lang === "id" ? "Sinkronisasi Penuh" : "Full UI Sync"}</strong>: {lang === "id" ? "Saat bot Anda mengambil langkah, dashboard ini diperbarui secara langsung beserta saldonya." : "The instant your bot takes a position, it updates this dashboard, updates your cash balance, and logs history on the ledger live."}</li>
               </ul>
             </div>
 
             <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl space-y-2">
-              <h4 className="font-semibold text-emerald-400">Webhook Parameters</h4>
+              <h4 className="font-semibold text-emerald-400">{lang === "id" ? "Parameter Webhook" : "Webhook Parameters"}</h4>
               <table className="w-full text-[10px] font-mono">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400">
-                    <th className="text-left py-1">Field</th>
-                    <th className="text-left py-1">Type</th>
-                    <th className="text-left py-1">Required</th>
+                    <th className="text-left py-1">{lang === "id" ? "Kolom" : "Field"}</th>
+                    <th className="text-left py-1">{lang === "id" ? "Tipe" : "Type"}</th>
+                    <th className="text-left py-1">{lang === "id" ? "Wajib" : "Required"}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-850 text-slate-350">
                   <tr>
                     <td className="py-1 text-emerald-400">symbol</td>
                     <td className="py-1">string</td>
-                    <td className="py-1">Yes</td>
+                    <td className="py-1">{lang === "id" ? "Ya" : "Yes"}</td>
                   </tr>
                   <tr>
                     <td className="py-1 text-emerald-400">type</td>
                     <td className="py-1">"BUY" | "SELL"</td>
-                    <td className="py-1">Yes</td>
+                    <td className="py-1">{lang === "id" ? "Ya" : "Yes"}</td>
                   </tr>
                   <tr>
                     <td className="py-1 text-emerald-400">price</td>
                     <td className="py-1">number</td>
-                    <td className="py-1">Yes</td>
+                    <td className="py-1">{lang === "id" ? "Ya" : "Yes"}</td>
                   </tr>
                   <tr>
                     <td className="py-1 text-emerald-400">amount</td>
                     <td className="py-1">number</td>
-                    <td className="py-1">Yes</td>
+                    <td className="py-1">{lang === "id" ? "Ya" : "Yes"}</td>
                   </tr>
                   <tr>
                     <td className="py-1 text-indigo-400">secret</td>
                     <td className="py-1">string</td>
-                    <td className="py-1">Yes (Match)</td>
+                    <td className="py-1">{lang === "id" ? "Ya (Cocok)" : "Yes (Match)"}</td>
                   </tr>
                 </tbody>
               </table>

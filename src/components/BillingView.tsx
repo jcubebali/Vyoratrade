@@ -13,9 +13,10 @@ import { CompleteState } from "../types";
 interface BillingViewProps {
   state: CompleteState;
   onUpgradePlan: (plan: string) => Promise<void>;
+  lang: "id" | "en";
 }
 
-export default function BillingView({ state, onUpgradePlan }: BillingViewProps) {
+export default function BillingView({ state, onUpgradePlan, lang }: BillingViewProps) {
   const { subscription } = state;
   const [activePlan, setActivePlan] = useState(subscription.plan);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -27,11 +28,16 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
 
   const plans = [
     {
-      name: "free",
-      title: "Retail Trial Block",
+      name: "trial",
+      title: lang === "id" ? "Retail Trial Block" : "Retail Trial Block",
       price: "$0",
-      desc: "Perfect overview space for retail quantitative hobbyists testing indicators manually.",
-      features: [
+      desc: lang === "id" ? "Tinjauan khusus bagi trader ritel untuk memeriksa harga secara manual." : "Perfect overview space for retail quantitative hobbyists testing indicators manually.",
+      features: lang === "id" ? [
+        "Ticker Harga Token Realtime",
+        "Sinyal Persilangan EMA Standar",
+        "Seting Parameter Manual",
+        "Penyimpanan in-memory statis yang terbatas"
+      ] : [
         "Realtime token pricing tickers",
         "Standard EMA crossover signals",
         "Manual parameter locking",
@@ -40,10 +46,15 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
     },
     {
       name: "pro",
-      title: "Alpha Quant Premium",
+      title: lang === "id" ? "Alpha Quant Premium" : "Alpha Quant Premium",
       price: "$29",
-      desc: "Improves execution latency with high-frequency Gemini deep analyses enabled.",
-      features: [
+      desc: lang === "id" ? "Trading bot full auto dengan analis dari Gemini & eksekusi cepat API." : "Improves execution latency with high-frequency Gemini deep analyses enabled.",
+      features: lang === "id" ? [
+        "Akses penuh Audit Teknis Gemini 3.5 Tanpa Batas",
+        "Jadwal Interval Trading Siklus Bot Otomatis Penuh",
+        "Sinyal Analisis Tambahan MACD Divergence",
+        "Dukungan Peringatan Telegram Webhook Resmi"
+      ] : [
         "Uncapped Gemini 3.5 technical audits",
         "Full-auto bot cycle trades interval",
         "Advanced MACD divergence scalping index",
@@ -52,10 +63,15 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
     },
     {
       name: "institutional",
-      title: "Hedge Fund Elite",
+      title: lang === "id" ? "Hedge Fund Elite" : "Hedge Fund Elite",
       price: "$199",
-      desc: "Maximum capability block with priority API channels and low latency configurations.",
-      features: [
+      desc: lang === "id" ? "Prioritas utama node VPS & koneksi khusus Binance." : "Maximum capability block with priority API channels and low latency configurations.",
+      features: lang === "id" ? [
+        "Batasan token prioritas dari Penasihat AI Gemini Quant",
+        "Integrasi Strategi Kustom sesuai permintaan",
+        "Hook API Binance Broker Tanpa Potong Latensi",
+        "Sandbox Cloud khusus"
+      ] : [
         "Priority Gemini quant advisor tokens limit",
         "Custom strategy integrations",
         "Binance broker API hooks",
@@ -105,17 +121,17 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
       <header className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-slate-100">
-            Subscription Plan Tiers
+            {lang === "id" ? "Paket Berlangganan (Tingkatan)" : "Subscription Plan Tiers"}
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Synchronize pricing parameters and upgrade core Vyora quant bounds instantly.
+            {lang === "id" ? "Sinkronisasi parameter harga dan tingkatkan batas kuantitas inti Vyora secara instan." : "Synchronize pricing parameters and upgrade core Vyora quant bounds instantly."}
           </p>
         </div>
 
         {/* Plan Header status indicator */}
         <div className="p-3 bg-indigo-500/10 border border-indigo-500/15 rounded-xl text-xs flex items-center gap-2 font-mono text-indigo-300 font-extrabold select-none">
           <Sparkles className="h-4.5 w-4.5" />
-          <span>CURRENT ACTIVE PLAN: {activePlan.toUpperCase()} BLOCK</span>
+          <span>{lang === "id" ? "PAKET SAAT INI:" : "CURRENT ACTIVE PLAN:"} {activePlan.toUpperCase()} BLOCK</span>
         </div>
       </header>
 
@@ -136,7 +152,7 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                 {/* Visual Accent for current active plan */}
                 {isCurrent && (
                   <span className="absolute top-4 right-4 bg-emerald-500/15 text-emerald-400 text-[9px] font-mono leading-none rounded-full px-2.5 py-1 font-bold">
-                    IN USE
+                    {lang === "id" ? "DIGUNAKAN" : "IN USE"}
                   </span>
                 )}
 
@@ -146,7 +162,7 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                   </h3>
                   <div className="flex items-baseline space-x-1.5 mt-2.5">
                     <span className="text-3xl font-extrabold text-slate-100 font-mono select-none">{p.price}</span>
-                    <span className="text-xs text-slate-500 font-mono">/ Month USD</span>
+                    <span className="text-xs text-slate-500 font-mono">/ {lang === "id" ? "Bulan USD" : "Month USD"}</span>
                   </div>
                   <p className="text-xs text-slate-400 mt-2 font-medium leading-relaxed font-sans min-h-[48px]">
                     {p.desc}
@@ -169,7 +185,7 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                     disabled 
                     className="w-full bg-slate-800 border border-slate-750 text-slate-500 font-bold px-4 py-2.5 rounded-xl text-xs tracking-wider uppercase font-mono select-none"
                   >
-                    PLAN CURRENTLY ENFORCED
+                    {lang === "id" ? "PAKET SEDANG DITERAPKAN" : "PLAN CURRENTLY ENFORCED"}
                   </button>
                 ) : (
                   <button 
@@ -177,7 +193,7 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                     className="w-full bg-emerald-500 hover:bg-emerald-600 hover:scale-[1.01] active:translate-y-0.5 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs tracking-wider uppercase flex items-center justify-center gap-1.5 transition cursor-pointer select-none font-sans"
                   >
                     <CreditCard className="h-4 w-4" />
-                    <span>UPGRADE LICENSE {p.price}</span>
+                    <span>{p.price === "$0" ? (lang === "id" ? "TURUNKAN PAKET" : "DOWNGRADE PLAN") : `${lang === "id" ? "TINGKATKAN LISENSI" : "UPGRADE LICENSE"} ${p.price}`}</span>
                   </button>
                 )}
               </div>
@@ -196,7 +212,7 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-[#00AFEF] animate-pulse" />
                 <h3 className="text-sm font-bold text-slate-100 font-mono tracking-wider uppercase">
-                  SIMULATED SANDBOX BILLING
+                  {lang === "id" ? "PENAGIHAN KOTAK PASIR SIMULASI" : "SIMULATED SANDBOX BILLING"}
                 </h3>
               </div>
               <button 
@@ -213,15 +229,15 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
               {paymentStep === "details" && (
                 <div className="space-y-4">
                   <div className="p-3.5 bg-slate-950 rounded-xl border border-slate-800 space-y-1">
-                    <span className="text-[9px] text-slate-500 font-mono uppercase font-bold">DESIRED PRODUCT</span>
-                    <p className="text-xs font-semibold text-slate-200">Vyora {targetUpgradePlan.toUpperCase()} Pack Activation</p>
-                    <p className="text-sm font-bold text-slate-100 font-mono mt-1">{targetPrice} / month</p>
+                    <span className="text-[9px] text-slate-500 font-mono uppercase font-bold">{lang === "id" ? "PRODUK YANG DIKEHENDAKI" : "DESIRED PRODUCT"}</span>
+                    <p className="text-xs font-semibold text-slate-200">{lang === "id" ? "Aktivasi Paket" : "Activation"} Vyora {targetUpgradePlan.toUpperCase()}</p>
+                    <p className="text-sm font-bold text-slate-100 font-mono mt-1">{targetPrice} / {lang === "id" ? "bulan" : "month"}</p>
                   </div>
 
                   <div className="space-y-3">
                     <div>
                       <label className="text-[10px] font-mono text-slate-400 uppercase font-semibold block mb-1">
-                        Client Full Name
+                        {lang === "id" ? "Nama Lengkap Klien" : "Client Full Name"}
                       </label>
                       <input
                         type="text"
@@ -234,7 +250,7 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                     </div>
                     <div>
                       <label className="text-[10px] font-mono text-slate-400 uppercase font-semibold block mb-1">
-                        Billing Email Address
+                        {lang === "id" ? "Alamat Email Penagihan" : "Billing Email Address"}
                       </label>
                       <input
                         type="email"
@@ -251,7 +267,7 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                     onClick={handleTriggerSimulatedPayment}
                     className="w-full bg-[#00AFEF] hover:bg-[#009bde] text-slate-950 font-bold text-xs uppercase py-2.5 rounded-lg select-none cursor-pointer tracking-wider"
                   >
-                    PROCEED TO SIMULATED MIDTRANS SANDBOX
+                    {lang === "id" ? "LANJUTKAN KE SIMULASI SANDBOX MIDTRANS" : "PROCEED TO SIMULATED MIDTRANS SANDBOX"}
                   </button>
                 </div>
               )}
@@ -260,8 +276,8 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                 <div className="py-12 text-center space-y-4">
                   <Loader className="h-8 w-8 text-[#00AFEF] animate-spin mx-auto" />
                   <div>
-                    <h4 className="text-xs font-bold text-slate-200">Securing Payment Gateway Tokens...</h4>
-                    <p className="text-[10px] text-slate-500 mt-1 select-none">Contacting Midtrans mock payment channels.</p>
+                    <h4 className="text-xs font-bold text-slate-200">{lang === "id" ? "Mengamankan Token Gerbang Pembayaran..." : "Securing Payment Gateway Tokens..."}</h4>
+                    <p className="text-[10px] text-slate-500 mt-1 select-none">{lang === "id" ? "Menghubungi saluran pembayaran tiruan Midtrans." : "Contacting Midtrans mock payment channels."}</p>
                   </div>
                 </div>
               )}
@@ -275,7 +291,7 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                     </div>
 
                     <p className="text-xs text-slate-350 leading-relaxed font-sans">
-                      This is a real-time simulation page representing your Midtrans secure Indonesian credit/debit card window. Click **Authorize** to mock transaction completion, or **Decline** to cancel.
+                      {lang === "id" ? "Ini adalah halaman simulasi waktu nyata yang mewakili jendela kartu kredit/debit Indonesia aman Midtrans Anda. Klik **Otorisasi** untuk menyimulasikan penyelesaian transaksi, atau **Tolak** untuk membatalkan." : "This is a real-time simulation page representing your Midtrans secure Indonesian credit/debit card window. Click **Authorize** to mock transaction completion, or **Decline** to cancel."}
                     </p>
                   </div>
 
@@ -284,13 +300,13 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                       onClick={() => handleConfirmMockStatus(false)}
                       className="bg-slate-800 hover:bg-slate-750 text-slate-400 font-bold text-xs uppercase py-2.5 rounded-lg cursor-pointer select-none"
                     >
-                      DECLINE
+                      {lang === "id" ? "TOLAK" : "DECLINE"}
                     </button>
                     <button
                       onClick={() => handleConfirmMockStatus(true)}
                       className="bg-[#00AFEF] hover:bg-[#009bde] text-slate-950 font-bold text-xs uppercase py-2.5 rounded-lg cursor-pointer select-none"
                     >
-                      AUTHORIZE PAYMENT
+                      {lang === "id" ? "OTORISASI PEMBAYARAN" : "AUTHORIZE PAYMENT"}
                     </button>
                   </div>
                 </div>
@@ -300,9 +316,9 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                 <div className="py-8 text-center space-y-4">
                   <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
                   <div>
-                    <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wide">License Upgraded Successfully!</h4>
+                    <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wide">{lang === "id" ? "Lisensi Berhasil Ditingkatkan!" : "License Upgraded Successfully!"}</h4>
                     <p className="text-xs text-slate-400 mt-1.5 leading-relaxed font-sans">
-                      Your Vyora engine balance channels have been upgraded to **{targetUpgradePlan.toUpperCase()}** parameters immediately. All rate limits are expanded.
+                      {lang === "id" ? "Saluran saldo mesin Vyora Anda telah ditingkatkan ke parameter" : "Your Vyora engine balance channels have been upgraded to"} **{targetUpgradePlan.toUpperCase()}** {lang === "id" ? "segera. Semua batas kecepatan diperluas." : "parameters immediately. All rate limits are expanded."}
                     </p>
                   </div>
 
@@ -310,7 +326,7 @@ export default function BillingView({ state, onUpgradePlan }: BillingViewProps) 
                     onClick={() => setIsCheckoutOpen(false)}
                     className="bg-emerald-500 hover:bg-emerald-650 hover:bg-emerald-601 text-slate-950 font-bold text-xs uppercase px-5 py-2 rounded-lg cursor-pointer select-none font-mono"
                   >
-                    RESUME TRADING
+                    {lang === "id" ? "LANJUTKAN TRADING" : "RESUME TRADING"}
                   </button>
                 </div>
               )}

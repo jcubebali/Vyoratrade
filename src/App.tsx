@@ -53,6 +53,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [showLoginScreen, setShowLoginScreen] = useState<boolean>(false);
+  const [lang, setLang] = useState<"id" | "en">("id");
 
   useEffect(() => {
     let unsubUserDoc: (() => void) | undefined;
@@ -171,10 +172,12 @@ export default function App() {
   
   if (!user) {
     if (showLoginScreen) {
-      return <LoginView onBackToHome={() => setShowLoginScreen(false)} />;
+      return <LoginView lang={lang} onBackToHome={() => setShowLoginScreen(false)} />;
     }
     return (
       <LandingPage 
+        lang={lang}
+        setLang={setLang}
         onLogin={() => setShowLoginScreen(true)} 
         onRegister={() => setShowLoginScreen(true)} 
       />
@@ -268,44 +271,44 @@ export default function App() {
   const isElite = state.subscription?.plan?.toLowerCase() === "elite";
 
   const navItems = [
-    { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-    { id: "screener", label: "Quantum Screener", icon: LineChart },
-    { id: "bot", label: "Bot Controls", icon: Bot },
-    { id: "trades", label: "Ledger history", icon: History },
-    { id: "chat", label: "Advisor chat", icon: MessageSquare },
-    { id: "portfolio", label: "Portfolio breakout", icon: PieChart },
-    { id: "billing", label: "Subscription Plans", icon: CreditCard },
-    { id: "settings", label: "Secret Vault", icon: Settings },
+    { id: "dashboard", label: lang === "id" ? "Ringkasan" : "Overview", icon: LayoutDashboard },
+    { id: "screener", label: lang === "id" ? "Screener Kuantum" : "Quantum Screener", icon: LineChart },
+    { id: "bot", label: lang === "id" ? "Kontrol Bot" : "Bot Controls", icon: Bot },
+    { id: "trades", label: lang === "id" ? "Riwayat Buku Besar" : "Ledger history", icon: History },
+    { id: "chat", label: lang === "id" ? "Obrolan Penasihat" : "Advisor chat", icon: MessageSquare },
+    { id: "portfolio", label: lang === "id" ? "Breakout Portofolio" : "Portfolio breakout", icon: PieChart },
+    { id: "billing", label: lang === "id" ? "Paket Berlangganan" : "Subscription Plans", icon: CreditCard },
+    { id: "settings", label: lang === "id" ? "Brankas Rahasia" : "Secret Vault", icon: Settings },
   ];
 
   const renderActiveView = () => {
     switch (activeTab) {
       case "dashboard":
-        return <DashboardView state={state} onToggleBot={handleToggleBot} onSetActiveTab={setActiveTab} />;
+        return <DashboardView lang={lang} state={state} onToggleBot={handleToggleBot} onSetActiveTab={setActiveTab} />;
       case "screener":
-        return <ScreenerView state={state} />;
+        return <ScreenerView lang={lang} state={state} />;
       case "bot":
         return isPro ? (
-          <BotControlView state={state} onToggleBot={handleToggleBot} onConfigureBot={handleConfigureBot} />
+          <BotControlView lang={lang} state={state} onToggleBot={handleToggleBot} onConfigureBot={handleConfigureBot} />
         ) : (
-          <BillingView state={state} onUpgradePlan={handleUpgradePlan} />
+          <BillingView lang={lang} state={state} onUpgradePlan={handleUpgradePlan} />
         );
       case "trades":
-        return <TradesView state={state} />;
+        return <TradesView lang={lang} state={state} />;
       case "chat":
         return isPro ? (
-          <ChatroomView state={state} />
+          <ChatroomView lang={lang} state={state} />
         ) : (
-          <BillingView state={state} onUpgradePlan={handleUpgradePlan} />
+          <BillingView lang={lang} state={state} onUpgradePlan={handleUpgradePlan} />
         );
       case "portfolio":
-        return <PortfolioView state={state} />;
+        return <PortfolioView lang={lang} state={state} />;
       case "billing":
-        return <BillingView state={state} onUpgradePlan={handleUpgradePlan} />;
+        return <BillingView lang={lang} state={state} onUpgradePlan={handleUpgradePlan} />;
       case "settings":
-        return <SettingsView state={state} onSaveSettings={handleSaveSettings} />;
+        return <SettingsView lang={lang} state={state} onSaveSettings={handleSaveSettings} />;
       default:
-        return <DashboardView state={state} onToggleBot={handleToggleBot} onSetActiveTab={setActiveTab} />;
+        return <DashboardView lang={lang} state={state} onToggleBot={handleToggleBot} onSetActiveTab={setActiveTab} />;
     }
   };
 
@@ -313,13 +316,13 @@ export default function App() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans leading-relaxed tracking-normal antialiased selection:bg-emerald-500 selection:text-slate-950">
       
       {/* 1. Mobile Top Bar Header Navigation */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900 border-b border-slate-805 border-slate-800 z-40 px-4 flex items-center justify-between select-none">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-20 bg-slate-900 border-b border-slate-805 border-slate-800 z-40 px-4 flex items-center justify-between select-none">
         <div className="flex items-center space-x-2">
           <span className="flex items-center font-mono">
             <img 
-              src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+              src="https://res.cloudinary.com/dbckdslrw/image/upload/v1781410573/vyora-logo_hjxxld.png" 
               alt="Vyora" 
-              className="h-10 w-auto object-contain"
+              className="h-14 w-auto object-contain"
               referrerPolicy="no-referrer"
             />
           </span>
@@ -328,12 +331,28 @@ export default function App() {
           </span>
         </div>
 
-        <button 
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2 text-slate-400 hover:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-800 rounded-lg cursor-pointer"
-        >
-          {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="flex">
+            <button 
+              onClick={() => setLang("id")} 
+              className={`font-sans text-[10px] font-bold py-1 px-2.5 rounded-l border cursor-pointer transition-colors ${lang === "id" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 z-10 relative" : "bg-transparent text-slate-400 border-slate-700/80 hover:text-slate-200 z-0 relative"}`}
+            >
+              ID
+            </button>
+            <button 
+              onClick={() => setLang("en")} 
+              className={`font-sans text-[10px] font-bold py-1 px-2.5 rounded-r border-t border-b border-r -ml-px cursor-pointer transition-colors ${lang === "en" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 border-l z-10 relative" : "bg-transparent text-slate-400 border-slate-700/80 border-l hover:text-slate-200 z-0 relative"}`}
+            >
+              EN
+            </button>
+          </div>
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 text-slate-400 hover:text-slate-100 focus:outline-none focus:ring-1 focus:ring-slate-800 rounded-lg cursor-pointer"
+          >
+            {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       </header>
 
       {/* 2. Responsive Primary Sidebar Navigation */}
@@ -344,13 +363,13 @@ export default function App() {
       `}>
         <div className="flex flex-col flex-1">
           {/* Header Branding */}
-          <div className="h-16 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-900/60 font-mono">
+          <div className="h-24 flex items-center justify-between px-6 border-b border-slate-800/80 bg-slate-900/60 font-mono">
             <div className="flex items-center space-x-2">
               <span className="flex items-center font-mono">
                 <img 
-                  src="https://res.cloudinary.com/dbckdslrw/image/upload/v1777721734/Vyora_20260502_110933_0000_2_tz8a1k.jpg" 
+                  src="https://res.cloudinary.com/dbckdslrw/image/upload/v1781410573/vyora-logo_hjxxld.png" 
                   alt="Vyora" 
-                  className="h-11 w-auto object-contain"
+                  className="h-16 w-auto object-contain"
                   referrerPolicy="no-referrer"
                 />
               </span>
@@ -408,15 +427,15 @@ export default function App() {
         <div className="p-4 border-t border-slate-800 bg-slate-950/20 font-mono text-[10px] text-slate-500 space-y-3 select-none">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="font-sans font-medium">Auto-Sync status:</span>
+              <span className="font-sans font-medium">{lang === "id" ? "Status Auto-Sync:" : "Auto-Sync status:"}</span>
               <span className="inline-flex items-center gap-1 text-emerald-400 font-bold">
                 <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
                 ONLINE
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="font-sans font-medium">Licensed Plan:</span>
-              <span className="text-slate-300 font-extrabold uppercase">{state.subscription.plan?.toUpperCase()} PLAN</span>
+              <span className="font-sans font-medium">{lang === "id" ? "Paket Lisensi:" : "Licensed Plan:"}</span>
+              <span className="text-slate-300 font-extrabold uppercase">{state.subscription.plan?.toUpperCase()} {lang === "id" ? "PAKET" : "PLAN"}</span>
             </div>
           </div>
           
@@ -425,13 +444,27 @@ export default function App() {
             className="w-full flex items-center justify-center gap-2 py-2 mt-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-200 border border-slate-800 rounded-lg transition-colors cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span className="uppercase tracking-wider font-bold">Terminate Session</span>
+            <span className="uppercase tracking-wider font-bold">{lang === "id" ? "Akhiri Sesi" : "Terminate Session"}</span>
           </button>
         </div>
       </aside>
 
       {/* 3. Main Display Screen Content Panel */}
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden pt-16 lg:pt-0 bg-slate-950 relative">
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden pt-20 lg:pt-0 bg-slate-950 relative">
+        <div className="hidden lg:flex absolute top-6 right-8 z-50">
+          <button 
+            onClick={() => setLang("id")} 
+            className={`font-sans text-[10px] font-bold py-1 px-2.5 rounded-l border cursor-pointer transition-colors ${lang === "id" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 z-10 relative" : "bg-transparent text-slate-400 border-slate-700/80 hover:text-slate-200 z-0 relative"}`}
+          >
+            ID
+          </button>
+          <button 
+            onClick={() => setLang("en")} 
+            className={`font-sans text-[10px] font-bold py-1 px-2.5 rounded-r border-t border-b border-r -ml-px cursor-pointer transition-colors ${lang === "en" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 border-l z-10 relative" : "bg-transparent text-slate-400 border-slate-700/80 border-l hover:text-slate-200 z-0 relative"}`}
+          >
+            EN
+          </button>
+        </div>
         <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <AnimatePresence mode="wait">
             <motion.div
@@ -440,9 +473,19 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18, ease: "easeInOut" }}
-              className="h-full max-w-7xl mx-auto"
+              className="min-h-full max-w-7xl mx-auto flex flex-col"
             >
-              {renderActiveView()}
+              <div className="flex-1">
+                {renderActiveView()}
+              </div>
+              
+              {/* Dashboard Footer */}
+              <footer className="mt-12 py-6 border-t border-slate-800/50 flex flex-col items-center sm:items-end justify-center text-xs text-slate-500 font-mono">
+                <div className="text-center sm:text-right">
+                  <p>&copy; {new Date().getFullYear()} Vyora Systems by J-CUBE.</p>
+                  <p>All rights reserved.</p>
+                </div>
+              </footer>
             </motion.div>
           </AnimatePresence>
         </div>

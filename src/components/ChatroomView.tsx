@@ -12,6 +12,7 @@ import { CompleteState } from "../types";
 
 interface ChatroomViewProps {
   state: CompleteState;
+  lang: "id" | "en";
 }
 
 interface ChatMessage {
@@ -20,11 +21,15 @@ interface ChatMessage {
   time: string;
 }
 
-export default function ChatroomView({ state }: ChatroomViewProps) {
+export default function ChatroomView({ state, lang }: ChatroomViewProps) {
+  const defaultBotMessage = lang === "id" 
+    ? "Selamat datang di ruang kerja penasihat Vyora Prime. Saya Vyora-AI (v3.5 stable model). Saya telah mengintegrasikan keluaran buku besar real-time Anda. Tanyakan tentang pemicu pasar, persilangan indikator, saldo token, atau konfigurasi risiko optimal." 
+    : "Welcome to the Vyora Prime advisory workspace. I am Vyora-AI (v3.5 stable model). I have integrated your real-time ledger outputs. Ask me regarding market triggers, indicator crossovers, token balances or optimal risk configs.";
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "bot",
-      content: "Welcome to the Vyora Prime advisory workspace. I am Vyora-AI (v3.5 stable model). I have integrated your real-time ledger outputs. Ask me regarding market triggers, indicator crossovers, token balances or optimal risk configs.",
+      content: defaultBotMessage,
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     }
   ]);
@@ -98,7 +103,11 @@ export default function ChatroomView({ state }: ChatroomViewProps) {
     }
   };
 
-  const samplePrompts = [
+  const samplePrompts = lang === "id" ? [
+    "Nilai level support dan resistance Solana.",
+    "Rekomendasikan konfigurasi stop-loss untuk scalping leverage BTC.",
+    "Jelaskan persilangan Dual EMA dibandingkan indikator RSI."
+  ] : [
     "Assess Solana support and resistance levels.",
     "Recommend a stop-loss config for BTC leverage scalping.",
     "Explain Dual EMA crossovers vs RSI indicators."
@@ -114,9 +123,9 @@ export default function ChatroomView({ state }: ChatroomViewProps) {
             <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-md shadow-emerald-400" />
             <div>
               <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-                Vyora AI Quantum Advisor <Sparkles className="h-4 w-4 text-emerald-400" />
+                {lang === "id" ? "Penasihat Kuantum Vyora AI" : "Vyora AI Quantum Advisor"} <Sparkles className="h-4 w-4 text-emerald-400" />
               </h3>
-              <p className="text-[10px] text-slate-500 font-medium">CONVERSATIONAL TRADING COMPILER • SHIELD PROT v2</p>
+              <p className="text-[10px] text-slate-500 font-medium">{lang === "id" ? "PERDAGANGAN BERBASIS OBROLAN • SHIELD PROT v2" : "CONVERSATIONAL TRADING COMPILER • SHIELD PROT v2"}</p>
             </div>
           </div>
           <span className="text-[10px] font-mono text-slate-500">model: gemini-3.5-flash</span>
@@ -157,7 +166,7 @@ export default function ChatroomView({ state }: ChatroomViewProps) {
             <div className="flex justify-start">
               <div className="max-w-[80%] rounded-2xl p-4 bg-slate-900 border border-slate-850 rounded-bl-none flex items-center space-x-2.5">
                 <Loader className="h-4 w-4 text-emerald-400 animate-spin" />
-                <span className="text-[11px] font-mono text-slate-400">Vyora Advisor is writing...</span>
+                <span className="text-[11px] font-mono text-slate-400">{lang === "id" ? "Penasihat Vyora sedang menulis..." : "Vyora Advisor is writing..."}</span>
               </div>
             </div>
           )}
@@ -172,14 +181,14 @@ export default function ChatroomView({ state }: ChatroomViewProps) {
             disabled={isSending}
             required
             className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-slate-200 font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-40"
-            placeholder="Query Vyora regarding RSI parameters, stop losses, or indicators..."
+            placeholder={lang === "id" ? "Tanya Vyora tentang RSI, stop loss, atau indikator lainnya..." : "Query Vyora regarding RSI parameters, stop losses, or indicators..."}
           />
           <button
             type="submit"
             disabled={isSending || !input.trim()}
             className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-800 text-slate-950 rounded-xl px-5 font-bold text-xs uppercase cursor-pointer select-none transition flex items-center gap-1 shrink-0"
           >
-            <span>SEND</span>
+            <span>{lang === "id" ? "KIRIM" : "SEND"}</span>
             <Send className="h-3.5 w-3.5" />
           </button>
         </form>
@@ -189,9 +198,9 @@ export default function ChatroomView({ state }: ChatroomViewProps) {
       <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-5 h-full">
         <div className="border-b border-slate-800 pb-3">
           <h3 className="text-xs font-semibold text-slate-300 font-mono uppercase tracking-wider">
-            Quick Actions
+            {lang === "id" ? "Aksi Cepat" : "Quick Actions"}
           </h3>
-          <p className="text-[10px] text-slate-500 mt-0.5">Click a prompt below to automatically populate chat inputs.</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">{lang === "id" ? "Klik salah satu prompt untuk mencoba obrolan." : "Click a prompt below to automatically populate chat inputs."}</p>
         </div>
 
         <div className="space-y-2">
