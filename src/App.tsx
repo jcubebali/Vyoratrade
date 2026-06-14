@@ -451,19 +451,37 @@ export default function App() {
 
       {/* 3. Main Display Screen Content Panel */}
       <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden pt-20 lg:pt-0 bg-slate-950 relative">
-        <div className="hidden lg:flex absolute top-6 right-8 z-50">
-          <button 
-            onClick={() => setLang("id")} 
-            className={`font-sans text-[10px] font-bold py-1 px-2.5 rounded-l border cursor-pointer transition-colors ${lang === "id" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 z-10 relative" : "bg-transparent text-slate-400 border-slate-700/80 hover:text-slate-200 z-0 relative"}`}
-          >
-            ID
-          </button>
-          <button 
-            onClick={() => setLang("en")} 
-            className={`font-sans text-[10px] font-bold py-1 px-2.5 rounded-r border-t border-b border-r -ml-px cursor-pointer transition-colors ${lang === "en" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 border-l z-10 relative" : "bg-transparent text-slate-400 border-slate-700/80 border-l hover:text-slate-200 z-0 relative"}`}
-          >
-            EN
-          </button>
+        {/* Desktop Header Top Bar */}
+        <div className="hidden lg:flex h-16 border-b border-slate-900 bg-slate-950 px-8 items-center justify-between select-none shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono tracking-wider text-slate-500 uppercase font-bold">
+              {lang === "id" ? "TERMINAL DATA AKTIF // " : "ACTIVE DATA TERMINAL // "}
+              <span className="text-emerald-400">
+                {activeTab === "dashboard" ? (lang === "id" ? "RINGKASAN" : "OVERVIEW") :
+                 activeTab === "screener" ? (lang === "id" ? "SCREENER KUANTUM" : "QUANTUM SCREENER") :
+                 activeTab === "bot" ? (lang === "id" ? "KONTROL BOT" : "BOT CONTROLS") :
+                 activeTab === "trades" ? (lang === "id" ? "RIWAYAT BUKU BESAR" : "LEDGER HISTORY") :
+                 activeTab === "chat" ? (lang === "id" ? "OBROLAN PENASIHAT" : "ADVISOR CHAT") :
+                 activeTab === "portfolio" ? (lang === "id" ? "BREAKOUT PORTOFOLIO" : "PORTFOLIO BREAKOUT") :
+                 activeTab === "billing" ? (lang === "id" ? "PAKET BERLANGGANAN" : "SUBSCRIPTION PLANS") :
+                 activeTab === "settings" ? (lang === "id" ? "BRANKAS RAHASIA" : "SECRET VAULT") : "SYSTEM"}
+              </span>
+            </span>
+          </div>
+          <div className="flex">
+            <button 
+              onClick={() => setLang("id")} 
+              className={`font-sans text-[10px] font-bold py-1.5 px-3 rounded-l border cursor-pointer transition-colors ${lang === "id" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 z-10 relative" : "bg-transparent text-slate-500 border-slate-800 hover:text-slate-200 z-0 relative"}`}
+            >
+              ID
+            </button>
+            <button 
+              onClick={() => setLang("en")} 
+              className={`font-sans text-[10px] font-bold py-1.5 px-3 rounded-r border-t border-b border-r -ml-px cursor-pointer transition-colors ${lang === "en" ? "bg-emerald-400/15 text-emerald-400 border-emerald-400 border-l z-10 relative" : "bg-transparent text-slate-500 border-slate-800 border-l hover:text-slate-200 z-0 relative"}`}
+            >
+              EN
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <AnimatePresence mode="wait">
