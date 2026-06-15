@@ -88,7 +88,21 @@ export default function BillingView({ state, onUpgradePlan, lang }: BillingViewP
   const handleLaunchCheckout = (planName: string, price: string) => {
     setTargetUpgradePlan(planName);
     setTargetPrice(price);
-    setPaymentStep("details");
+    
+    const planRanks: Record<string, number> = {
+      trial: 1,
+      pro: 2,
+      elite: 3
+    };
+    
+    const currentRank = planRanks[activePlan?.toLowerCase()] || 1;
+    const targetRank = planRanks[planName.toLowerCase()] || 1;
+    
+    if (targetRank < currentRank) {
+      setPaymentStep("downgrade_confirm");
+    } else {
+      setPaymentStep("details");
+    }
     setIsCheckoutOpen(true);
   };
 
@@ -144,6 +158,15 @@ export default function BillingView({ state, onUpgradePlan, lang }: BillingViewP
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {plans.map((p) => {
           const isCurrent = activePlan === p.name;
+          const planRanks: Record<string, number> = {
+            trial: 1,
+            pro: 2,
+            elite: 3
+          };
+          const currentRank = planRanks[activePlan?.toLowerCase()] || 1;
+          const targetRank = planRanks[p.name.toLowerCase()] || 1;
+          const isDowngrade = targetRank < currentRank;
+
           return (
             <div 
               key={p.name} 
@@ -198,7 +221,7 @@ export default function BillingView({ state, onUpgradePlan, lang }: BillingViewP
                     className="w-full bg-emerald-500 hover:bg-emerald-600 hover:scale-[1.01] active:translate-y-0.5 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs tracking-wider uppercase flex items-center justify-center gap-1.5 transition cursor-pointer select-none font-sans"
                   >
                     <CreditCard className="h-4 w-4" />
-                    <span>{p.price === "$0" ? (lang === "id" ? "TURUNKAN PAKET" : "DOWNGRADE PLAN") : `${lang === "id" ? "TINGKATKAN LISENSI" : "UPGRADE LICENSE"} ${p.price}`}</span>
+                    <span>{isDowngrade ? (lang === "id" ? "TURUNKAN PAKET" : "DOWNGRADE PLAN") : `${lang === "id" ? "TINGKATKAN LISENSI" : "UPGRADE LICENSE"} ${p.price}`}</span>
                   </button>
                 )}
               </div>
@@ -215,9 +238,11 @@ export default function BillingView({ state, onUpgradePlan, lang }: BillingViewP
             {/* Modal Header */}
             <div className="p-4 border-b border-slate-850 bg-slate-950/40 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#00AFEF] animate-pulse" />
+                <span className={`h-2 w-2 rounded-full animate-pulse ${paymentStep === "downgrade_confirm" ? "bg-amber-500" : "bg-[#00AFEF]"}`} />
                 <h3 className="text-sm font-bold text-slate-100 font-mono tracking-wider uppercase">
-                  {lang === "id" ? "PENAGIHAN KOTAK PASIR SIMULASI" : "SIMULATED SANDBOX BILLING"}
+                  {paymentStep === "downgrade_confirm"
+                    ? (lang === "id" ? "KONFIRMASI TURUNKAN PAKET" : "CONFIRM DOWNGRADE PLAN")
+                    : (lang === "id" ? "PENAGIHAN KOTAK PASIR SIMULASI" : "SIMULATED SANDBOX BILLING")}
                 </h3>
               </div>
               <button 
@@ -230,6 +255,49 @@ export default function BillingView({ state, onUpgradePlan, lang }: BillingViewP
 
             {/* Modal Contents based on current Checkout Step */}
             <div className="p-5 space-y-4">
+
+              {paymentStep === "downgrade_confirm" && (
+                <div className="space-y-4 text-center py-4">
+                  <div className="mx-auto h-12 w-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500">
+                    <AlertCircle className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-100 uppercase tracking-wide">
+                      {lang === "id" ? "Konfirmasi Penurunan Paket" : "Confirm Subscription Downgrade"}
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                      {lang === "id" 
+                        ? `Apakah Anda yakin ingin menurunkan paket Anda dari ${activePlan.toUpperCase()} ke ${targetUpgradePlan.toUpperCase()}? Beberapa fitur canggih dan kuota harian akan disesuaikan.`
+                        : `Are you sure you want to downgrade your subscription from ${activePlan.toUpperCase()} to ${targetUpgradePlan.toUpperCase()}? Premium features and capacity bounds will be adjusted.`}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <button
+                      onClick={() => setIsCheckoutOpen(false)}
+                      className="bg-slate-800 hover:bg-slate-755 hover:bg-slate-750 text-slate-300 font-bold text-xs uppercase py-2.5 rounded-lg cursor-pointer select-none"
+                    >
+                      {lang === "id" ? "BATAL" : "CANCEL"}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        setPaymentStep("processing");
+                        try {
+                          await onUpgradePlan(targetUpgradePlan);
+                          setActivePlan(targetUpgradePlan);
+                          setPaymentStep("success");
+                        } catch (err) {
+                          console.error(err);
+                          alert("Failed to downgrade subscription.");
+                          setPaymentStep("downgrade_confirm");
+                        }
+                      }}
+                      className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs uppercase py-2.5 rounded-lg cursor-pointer select-none"
+                    >
+                      {lang === "id" ? "YA, KONFIRMASI" : "YES, CONFIRM"}
+                    </button>
+                  </div>
+                </div>
+              )}
               
               {paymentStep === "details" && (
                 <div className="space-y-4">
