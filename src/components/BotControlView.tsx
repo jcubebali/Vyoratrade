@@ -172,10 +172,21 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot, lan
     ]);
   };
 
+  const isElite = ["elite", "institutional", "hedge_fund_elite"].includes(state.subscription?.plan?.toLowerCase() || "");
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setSaveSuccess(false);
+
+    if (!isElite && parseInt(maxRam) > 1024) {
+      alert(lang === "id" 
+        ? "Paket Alpha Quant Premium membatasi RAM hingga maks 1024MB per bot. Silakan tingkatkan ke paket Hedge Fund Elite untuk kapasitas RAM hingga 4096MB!" 
+        : "Alpha Quant Premium plan limits RAM to maximum 1024MB per bot. Please upgrade to Hedge Fund Elite plan for up to 4096MB allocation!"
+      );
+      setIsSaving(false);
+      return;
+    }
 
     try {
       await onConfigureBot({
@@ -210,6 +221,16 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot, lan
     { 
       name: "SURE-STRIKE BREAKOUT", 
       desc: lang === "id" ? "Teridentifikasi konsolidasi dan menempatkan pemicu penembusan rentang batas dengan stop-loss mengikuti." : "Identifies consolidations and places boundary breakout triggers with immediate trailing stop-losses." 
+    },
+    { 
+      name: "QUANTUM AI CHOP-REVERSION", 
+      requiresElite: true,
+      desc: lang === "id" ? "Indikator tingkat lanjut bertenaga analisis saraf quant (Khusus paket Hedge Fund Elite)." : "Advanced neural quant analysis indicator (Exclusive to Hedge Fund Elite plan)." 
+    },
+    { 
+      name: "INSTITUTIONAL LIQUIDITY SWEEP", 
+      requiresElite: true,
+      desc: lang === "id" ? "Mendeteksi area likuiditas institusi besar & order-books imbalance (Khusus paket Hedge Fund Elite)." : "Stalks massive corporate/institutional order book imbalances and pools (Exclusive to Hedge Fund Elite plan)." 
     }
   ];
 
@@ -413,8 +434,11 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot, lan
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1.5 font-semibold">
-                    Maximum RAM Allocation limit per bot process (MB)
+                  <label className="text-[11px] font-mono uppercase font-bold text-slate-400 block mb-1.5 font-semibold flex items-center justify-between">
+                    <span>Maximum RAM Allocation limit per bot process (MB)</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded ${isElite ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border border-amber-500/20"}`}>
+                      {isElite ? "ELITE METRIC: MAX 4096MB" : "PREMIUM LIMIT: MAX 1024MB"}
+                    </span>
                   </label>
                   <input
                     type="number"
@@ -423,10 +447,17 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot, lan
                     className="w-full bg-slate-950 border border-slate-800 hover:border-slate-705 rounded-xl px-3.5 py-2.5 text-sm font-mono font-bold text-slate-200 focus:outline-none focus:border-emerald-500"
                     placeholder="512"
                     min="64"
-                    max="4096"
+                    max={isElite ? "4096" : "1024"}
                   />
                   <p className="text-[10px] text-slate-500 font-medium mt-1.5 leading-relaxed font-sans">
-                    Restricts the node process heap-memory allocation. Prevents daemon performance leaks on lightweight VPS systems. Recommendation: 512MB - 1024MB.
+                    {isElite 
+                      ? (lang === "id" 
+                          ? "Batas alokasi memori VPS Anda. Sebagai pengguna HEDGE FUND ELITE, batas alokasi optimal didukung hingga 4096MB secara real-time."
+                          : "Your VPS memory allocation limit. As a HEDGE FUND ELITE user, optimal allocations up to 4096MB are supported in real-time.")
+                      : (lang === "id"
+                          ? "Membatasi alokasi memori VPS. Lisensi Premium membatasi RAM hingga 1024MB. Tingkatkan ke Elite untuk alokasi ultra-cepat hingga 4096MB."
+                          : "Restricts VPS heap allocation. Premium license limits RAM up to 1024MB. Upgrade to Elite for lightning-fast allocations up to 4096MB.")
+                    }
                   </p>
                 </div>
                 
@@ -474,21 +505,34 @@ export default function BotControlView({ state, onToggleBot, onConfigureBot, lan
           <div className="space-y-4">
             {strategiesList.map((strat) => {
               const isActive = strategy === strat.name;
+              const isLocked = strat.requiresElite && !isElite;
               return (
                 <div
                   key={strat.name}
-                  onClick={() => setStrategy(strat.name)}
-                  className={`p-4 rounded-xl border transition cursor-pointer text-left ${
-                    isActive
-                      ? "bg-slate-950/70 border-emerald-500/50"
-                      : "bg-slate-950/20 border-slate-800 hover:border-slate-700"
+                  onClick={() => {
+                    if (isLocked) {
+                      alert(lang === "id" 
+                        ? `Strategi "${strat.name}" memerlukan paket HEDGE FUND ELITE. Silakan tingkatkan lisensi Anda di menu Paket Berlangganan.` 
+                        : `The "${strat.name}" strategy is exclusive to the HEDGE FUND ELITE plan. Please upgrade your license in the Subscription Plans tab.`
+                      );
+                      return;
+                    }
+                    setStrategy(strat.name);
+                  }}
+                  className={`p-4 rounded-xl border transition relative ${
+                    isLocked 
+                      ? "bg-slate-950/10 border-slate-900 opacity-60 hover:opacity-80 cursor-not-allowed" 
+                      : isActive
+                        ? "bg-slate-950/70 border-emerald-500/50 cursor-pointer"
+                        : "bg-slate-950/20 border-slate-800 hover:border-slate-700 cursor-pointer"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-xs font-bold text-slate-200 font-mono">
+                    <h4 className="text-xs font-bold text-slate-200 font-mono flex items-center gap-1.5">
                       {strat.name}
+                      {isLocked && <span className="text-[9px] bg-amber-500/10 text-amber-500 border border-amber-500/25 px-1 rounded font-sans">LOCK 🔒</span>}
                     </h4>
-                    {isActive && (
+                    {isActive && !isLocked && (
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-md shadow-emerald-400" />
                     )}
                   </div>

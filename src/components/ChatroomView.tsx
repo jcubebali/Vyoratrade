@@ -125,10 +125,24 @@ export default function ChatroomView({ state, lang }: ChatroomViewProps) {
               <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
                 {lang === "id" ? "Penasihat Kuantum Vyora AI" : "Vyora AI Quantum Advisor"} <Sparkles className="h-4 w-4 text-emerald-400" />
               </h3>
-              <p className="text-[10px] text-slate-500 font-medium">{lang === "id" ? "PERDAGANGAN BERBASIS OBROLAN • SHIELD PROT v2" : "CONVERSATIONAL TRADING COMPILER • SHIELD PROT v2"}</p>
+              <p className="text-[10px] text-slate-500 font-medium">
+                {["elite", "institutional", "hedge_fund_elite"].includes(state.subscription?.plan?.toLowerCase() || "")
+                  ? (lang === "id" ? "SISTEM INTELEKTUAL HEDGE FUND ELITE • AKTIF" : "SISTEM INTELEKTUAL HEDGE FUND ELITE • ACTIVE")
+                  : (lang === "id" ? "SALURAN OBROLAN PENASIHAT STANDAR • AKTIF" : "STANDARD ADVISOR CHAT CHANNEL • ACTIVE")
+                }
+              </p>
             </div>
           </div>
-          <span className="text-[10px] font-mono text-slate-500">model: gemini-3.5-flash</span>
+          <div className="text-right">
+            <span className="text-[10px] font-mono text-slate-500 block">
+              model: {["elite", "institutional", "hedge_fund_elite"].includes(state.subscription?.plan?.toLowerCase() || "") ? "gemini-3.5-pro + Deep-CoT" : "gemini-3.5-flash"}
+            </span>
+            {["elite", "institutional", "hedge_fund_elite"].includes(state.subscription?.plan?.toLowerCase() || "") && (
+              <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1 py-0.5 rounded leading-none inline-block mt-0.5">
+                VIP DIRECT DEDICATED STREAM
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Message Container streams */}
