@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Check, 
   CreditCard, 
@@ -9,6 +9,7 @@ import {
   X 
 } from "lucide-react";
 import { CompleteState } from "../types";
+import { doc } from "firebase/firestore"; // Ensure any missing types are resolved if needed
 
 interface BillingViewProps {
   state: CompleteState;
@@ -20,6 +21,10 @@ export default function BillingView({ state, onUpgradePlan, lang }: BillingViewP
   const { subscription } = state;
   const [activePlan, setActivePlan] = useState(subscription.plan);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  useEffect(() => {
+    setActivePlan(subscription.plan);
+  }, [subscription.plan]);
   const [targetUpgradePlan, setTargetUpgradePlan] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
   const [clientName, setClientName] = useState("");
@@ -62,7 +67,7 @@ export default function BillingView({ state, onUpgradePlan, lang }: BillingViewP
       ]
     },
     {
-      name: "institutional",
+      name: "elite",
       title: lang === "id" ? "Hedge Fund Elite" : "Hedge Fund Elite",
       price: "$199",
       desc: lang === "id" ? "Prioritas utama node VPS & koneksi khusus Binance." : "Maximum capability block with priority API channels and low latency configurations.",

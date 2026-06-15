@@ -264,11 +264,34 @@ export default function App() {
   };
 
   const handleUpgradePlan = async (plan: string) => {
-    alert('Untuk upgrade plan, hubungi admin via WhatsApp: +62881037763388');
+    if (user) {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, { plan: plan });
+        setState(prev => ({
+          ...prev,
+          subscription: { plan: plan, isActive: true }
+        }));
+        console.log("Successfully upgraded user plan in Firestore to:", plan);
+      } catch (err) {
+        console.error('Failed to update plan in Firestore:', err);
+        // Fallback local update
+        setState(prev => ({
+          ...prev,
+          subscription: { plan: plan, isActive: true }
+        }));
+      }
+    } else {
+      // Offline / Developer preview fallback
+      setState(prev => ({
+        ...prev,
+        subscription: { plan: plan, isActive: true }
+      }));
+    }
   };
 
-  const isPro = ["pro", "elite"].includes(state.subscription?.plan?.toLowerCase() || "");
-  const isElite = state.subscription?.plan?.toLowerCase() === "elite";
+  const isPro = ["pro", "elite", "institutional", "hedge_fund_elite"].includes(state.subscription?.plan?.toLowerCase() || "");
+  const isElite = ["elite", "institutional", "hedge_fund_elite"].includes(state.subscription?.plan?.toLowerCase() || "");
 
   const navItems = [
     { id: "dashboard", label: lang === "id" ? "Ringkasan" : "Overview", icon: LayoutDashboard },
