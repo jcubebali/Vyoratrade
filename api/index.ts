@@ -6,6 +6,8 @@ import fs from "fs";
 import crypto from "crypto";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
+import checkoutRouter from "./checkout.js";
+import webhookRouter from "./webhook.js";
 
 interface BotConfigType {
   isActive: boolean;
@@ -133,7 +135,14 @@ try {
 
 const app = express();
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
+
+app.use("/api", checkoutRouter);
+app.use("/api", webhookRouter);
 
 // Set Cross-Origin-Opener-Policy header to allow Google Login popups
 app.use((req, res, next) => {
