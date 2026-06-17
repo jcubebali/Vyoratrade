@@ -154,47 +154,47 @@ app.use((req, res, next) => {
 let signals: Record<string, any> = {
   BTCUSDT: {
     symbol: "BTCUSDT",
-    price: 92450.00,
-    change24h: 3.42,
-    rsi: 44.5,
-    macd: 12.8,
-    trend: "BULLISH",
-    verdict: "BUY",
-    confidence: "HIGH",
-    aiAnalysis: "Consolidation pattern breaks out with strong institutional support floor holding around $91,200 level. Multiple indicators signal standard convergence.",
+    price: 65821.00,
+    change24h: -0.78,
+    rsi: 49.9,
+    macd: -0.53,
+    trend: "NEUTRAL",
+    verdict: "HOLD",
+    confidence: "MEDIUM",
+    aiAnalysis: "Pola konsolidasi menembus ke atas dengan batas dukungan institusional super kuat bertahan di sekitar level $64.800.",
   },
   ETHUSDT: {
     symbol: "ETHUSDT",
-    price: 3125.50,
-    change24h: -1.15,
-    rsi: 38.2,
-    macd: -4.5,
-    trend: "BEARISH",
+    price: 1795.16,
+    change24h: 0.07,
+    rsi: 51.2,
+    macd: 0.03,
+    trend: "NEUTRAL",
     verdict: "HOLD",
     confidence: "MEDIUM",
-    aiAnalysis: "Ethereum retests structural EMA levels against persistent selling pressure. Volatility index points to imminent squeeze completion soon.",
+    aiAnalysis: "Ethereum menguji ulang level EMA struktural terhadap tekanan jual yang persisten. Indeks volatilitas menunjukkan penyelesaian tekanan.",
   },
   SOLUSDT: {
     symbol: "SOLUSDT",
-    price: 242.80,
-    change24h: 8.75,
-    rsi: 68.9,
-    macd: 3.4,
-    trend: "BULLISH",
-    verdict: "BUY",
-    confidence: "HIGH",
-    aiAnalysis: "Network transaction volumes jump with massive on-chain demand surge. RSI approaching overbought parameters but momentum sustains bullish structure.",
+    price: 73.73,
+    change24h: -0.50,
+    rsi: 47.4,
+    macd: -0.35,
+    trend: "NEUTRAL",
+    verdict: "HOLD",
+    confidence: "MEDIUM",
+    aiAnalysis: "Volume transaksi jaringan melonjak dengan lonjakan permintaan on-chain yang sangat besar.",
   },
   BNBUSDT: {
     symbol: "BNBUSDT",
-    price: 618.40,
-    change24h: 0.25,
-    rsi: 52.1,
-    macd: 0.8,
+    price: 606.38,
+    change24h: -1.61,
+    rsi: 47.8,
+    macd: -1.10,
     trend: "NEUTRAL",
     verdict: "HOLD",
     confidence: "LOW",
-    aiAnalysis: "Binance Token exhibits sideways channel motion pending key exchange listings and structural quarterly burn events updates.",
+    aiAnalysis: "Koin Binance menunjukkan pergerakan saluran sampingan menunggu pencatatan bursa utama dan pembaruan.",
   },
 };
 
@@ -631,23 +631,74 @@ Return only the raw JSON. No markdown ticks formatting, no extra explanation.`;
     console.error("Gemini Analyze Error; using technical convergence simulator:", err.message);
     
     // Mathematical simulation response when key isn't provided or fails
+    const currentPrice = coinData.price || 100;
+    const isId = lang === "id";
+    
+    const lowTarget = Math.round(currentPrice * 1.015);
+    const highTarget = Math.round(currentPrice * 1.045);
+    const supportLevel = Math.round(currentPrice * 0.98);
+    const resistanceLevel = Math.round(currentPrice * 1.02);
+    
+    const formatPrice = (val: number) => {
+      return val.toLocaleString(isId ? 'id-ID' : 'en-US');
+    };
+
     const targetPricesId = {
-      BTCUSDT: { low: 91800, high: 93450, r: "Saluran kelanjutan yang kaku di atas $92.000. Konvergensi RSI menyiratkan dukungan pembeli yang persisten di sekitar ambang batas EMA50." },
-      ETHUSDT: { low: 3080, high: 3180, r: "Berjuang di bawah garis tren lokal. Lantai support bertahan kuat di sekitar kolam likuiditas struktural pada $3.050." },
-      SOLUSDT: { low: 238, high: 252, r: "Pola on-chain bullish yang sangat kuat. Volume relatif menunjukkan kompresi ritel kecil tetapi tren struktural keseluruhan tetap bertahan." },
-      BNBUSDT: { low: 610, high: 628, r: "Konsolidasi dalam bollinger-band standar. Volume rendah menunjukkan tekanan momentum lokal sebelum breakout segera." }
-    }[safeSymbol as "BTCUSDT" | "ETHUSDT" | "SOLUSDT" | "BNBUSDT"] || { low: 90, high: 110, r: "Token menunjukkan saluran sampingan lokal." };
+      BTCUSDT: { 
+        low: lowTarget, 
+        high: highTarget, 
+        r: `Saluran kelanjutan yang kaku di atas $${formatPrice(resistanceLevel)}. Konvergensi RSI menyiratkan dukungan pembeli yang persisten di sekitar ambang batas EMA50 ($${formatPrice(supportLevel)}).` 
+      },
+      ETHUSDT: { 
+        low: lowTarget, 
+        high: highTarget, 
+        r: `Berjuang di bawah garis tren lokal. Lantai support bertahan kuat di sekitar kolam likuiditas struktural pada $${formatPrice(supportLevel)}.` 
+      },
+      SOLUSDT: { 
+        low: lowTarget, 
+        high: highTarget, 
+        r: `Pola on-chain bullish yang sangat kuat. Volume relatif menunjukkan kompresi ritel kecil tetapi tren struktural keseluruhan tetap bertahan di atas $${formatPrice(supportLevel)}.` 
+      },
+      BNBUSDT: { 
+        low: lowTarget, 
+        high: highTarget, 
+        r: `Konsolidasi dalam bollinger-band standar. Volume rendah menunjukkan tekanan momentum lokal sebelum breakout di atas $${formatPrice(resistanceLevel)}.` 
+      }
+    }[safeSymbol as "BTCUSDT" | "ETHUSDT" | "SOLUSDT" | "BNBUSDT"] || { 
+      low: lowTarget, 
+      high: highTarget, 
+      r: `Token menunjukkan saluran sampingan lokal di atas $${formatPrice(supportLevel)}.` 
+    };
 
     const targetPricesEn = {
-      BTCUSDT: { low: 91800, high: 93450, r: "Stiff continuation channels above $92,000. RSI convergence implies persistent buyer backup around EMA50 thresholds." },
-      ETHUSDT: { low: 3080, high: 3180, r: "Struggling below localized trend-lines. Support floors hold firm around structural liquidity pools at $3,050." },
-      SOLUSDT: { low: 238, high: 252, r: "Extremely strong bullish on-chain patterns. Relative volume demonstrates minor retail compression but overall structural trend sustains." },
-      BNBUSDT: { low: 610, high: 628, r: "Consolidation within standard bollinger-bands. Low volume indicates localized momentum squeeze before immediate breakouts." }
-    }[safeSymbol as "BTCUSDT" | "ETHUSDT" | "SOLUSDT" | "BNBUSDT"] || { low: 90, high: 110, r: "Token demonstrates localized sideways channels." };
+      BTCUSDT: { 
+        low: lowTarget, 
+        high: highTarget, 
+        r: `Stiff continuation channels above $${formatPrice(resistanceLevel)}. RSI convergence implies persistent buyer backup around EMA55 thresholds at $${formatPrice(supportLevel)}.` 
+      },
+      ETHUSDT: { 
+        low: lowTarget, 
+        high: highTarget, 
+        r: `Struggling below localized trend-lines. Support floors hold firm around structural liquidity pools at $${formatPrice(supportLevel)}.` 
+      },
+      SOLUSDT: { 
+        low: lowTarget, 
+        high: highTarget, 
+        r: `Extremely strong bullish on-chain patterns. Relative volume demonstrates minor retail compression but overall structural trend sustains above $${formatPrice(supportLevel)}.` 
+      },
+      BNBUSDT: { 
+        low: lowTarget, 
+        high: highTarget, 
+        r: `Consolidation within standard bollinger-bands. Low volume indicates localized momentum squeeze before immediate breakout above $${formatPrice(resistanceLevel)}.` 
+      }
+    }[safeSymbol as "BTCUSDT" | "ETHUSDT" | "SOLUSDT" | "BNBUSDT"] || { 
+      low: lowTarget, 
+      high: highTarget, 
+      r: `Token demonstrates localized sideways channels above $${formatPrice(supportLevel)}.` 
+    };
 
     const targetPrices = isId ? targetPricesId : targetPricesEn;
     const predictedVerdict = coinData.rsi > 60 ? "BUY" : coinData.rsi < 40 ? "SELL" : "HOLD";
-
     const reason = targetPrices.r;
     const risk = isId 
       ? "Peningkatan margin terbuka berjangka dan lonjakan tingkat pendanaan yang dapat memicu lonjakan likuidasi lokal."
